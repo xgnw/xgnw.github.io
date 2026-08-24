@@ -56,7 +56,6 @@
                padding: 16px; overflow-y: auto; background: var(--card-bg); }
     .ad_content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
     .ad_content_head { padding: 16px 16px 10px; border-bottom: 1px solid var(--card-border); }
-    .ad_content_head h3 { margin: 0 0 6px; font-size: 15px; }
     .ad_sec { border: 1px solid var(--card-border); border-radius: 12px; background: var(--card-bg);
               padding: 14px; margin-bottom: 14px; }
     .ad_sec h3 { margin: 0 0 12px; font-size: 14px; }
@@ -94,8 +93,18 @@
     .nv_tool_btn:hover { border-color: var(--main); color: var(--main); }
     /* 管理已有：分类/链接列表（大区域，内部滚动） */
     .nv_manage { flex: 1; overflow-y: auto; padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
-    /* 未选文件时的提示条 */
-    .nv_filebar { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--card-border); background: var(--background); }
+    /* 数据源选择条：本机文件 / GitHub 两种来源 */
+    .nv_filebar { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--card-border); background: var(--background); }
+    .nv_src_tabs { display: flex; gap: 8px; }
+    .nv_src_tab { height: 32px; padding: 0 14px; border: 1px solid var(--card-border); border-radius: 9px;
+                  background: var(--background); color: var(--fontcolor); font-size: 13px; cursor: pointer; }
+    .nv_src_tab.active { background: var(--main); color: #fff; border-color: var(--main); }
+    .nv_src_pane { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+    .nv_gh_input { height: 36px; padding: 0 10px; min-width: 180px; flex: 1 1 180px;
+                   border: 1px solid var(--card-border); border-radius: 8px;
+                   background: var(--card-bg); color: var(--fontcolor); font-size: 13px; }
+    .nv_gh_input:focus { outline: none; border-color: var(--main); }
+    .nv_gh_warn { width: 100%; font-size: 12px; color: var(--secondtext); margin: 2px 0 0; line-height: 1.5; }
     .nv_file_msg { font-size: 13px; color: var(--secondtext); flex: 1; min-width: 0; }
     .nv_cat { border: 1px solid var(--card-border); border-radius: 10px; padding: 10px 12px;
               background: var(--background); }
@@ -189,7 +198,7 @@
   <div class="login_wrap" id="loginView">
     <div class="login_card">
       <h2>管理后台登录</h2>
-      <p class="sub">登录后才能修改导航数据（本页直连 index.html，无需启动服务，需 Chrome / Edge；默认密码 admin，请尽快修改）</p>
+      <p class="sub">登录后才能修改导航数据。本页可直接读写 index.html：① 本机文件（需 Chrome / Edge）；② GitHub 仓库（任意浏览器，用 Token 直连 API）。默认密码 admin，请尽快修改。</p>
       <div class="login_row">
         <label for="loginPass">管理密码</label>
         <input type="password" id="loginPass" autocomplete="current-password" placeholder="请输入密码" />
@@ -257,8 +266,23 @@
         </div>
 
         <div id="nvFileBar" class="nv_filebar hidden">
-          <span class="nv_file_msg">请选择你的 index.html 文件以载入导航数据：</span>
-          <button type="button" id="nvPickFile" class="nv_btn">选择 index.html</button>
+          <div class="nv_src_tabs">
+            <button type="button" class="nv_src_tab active" data-src="file">本机文件</button>
+            <button type="button" class="nv_src_tab" data-src="github">GitHub 仓库</button>
+          </div>
+          <div id="nvFilePane" class="nv_src_pane">
+            <span class="nv_file_msg">请选择你的 index.html 文件以载入导航数据：</span>
+            <button type="button" id="nvPickFile" class="nv_btn">选择 index.html</button>
+          </div>
+          <div id="nvGhPane" class="nv_src_pane hidden">
+            <input id="ghToken" class="nv_gh_input" type="password" placeholder="GitHub Token（需 repo 权限）" autocomplete="off" />
+            <input id="ghRepo" class="nv_gh_input" placeholder="仓库 owner/repo" autocomplete="off" />
+            <input id="ghBranch" class="nv_gh_input" placeholder="分支（默认 main）" value="main" autocomplete="off" />
+            <input id="ghPath" class="nv_gh_input" placeholder="文件路径（默认 index.html）" value="index.html" autocomplete="off" />
+            <button type="button" id="ghConnect" class="nv_btn">连接并读取</button>
+            <span id="ghState" class="nv_file_msg"></span>
+            <p class="nv_gh_warn">用 GitHub API 直接读写仓库文件（无需服务端）。Token 仅存于本浏览器 localStorage，请使用具备 <code>repo</code> 权限的 Token（Fine-grained Token 需 Contents 读写权限）。注意：部署在公开站点时，此 Token 等同你的仓库写权限，请勿在公共电脑勾留。</p>
+          </div>
         </div>
 
         <div id="nvManageList" class="nv_manage"></div>
@@ -268,7 +292,7 @@
         <div class="ad_savebar">
           <p class="nv_hint" id="nvHint">修改后点「保存并写回」。</p>
           <div class="ad_save_acts">
-            <button type="button" id="nvReload" class="nv_mini" title="放弃未保存改动，从文件重新载入">重新载入</button>
+            <button type="button" id="nvReload" class="nv_mini" title="放弃未保存改动，从数据源重新载入">重新载入</button>
             <button type="button" id="nvSave" class="nv_btn">保存并写回</button>
           </div>
         </div>
@@ -304,9 +328,10 @@
     /* ============================================================
        导航数据管理页（admin.html）—— 纯浏览器端，无需 node serve.js
        流程：① 客户端登录闸门：SHA-256 比对 localStorage 密码哈希（默认 admin）
-            ② 解锁后由 File System Access 选 index.html，或用 IndexedDB 记住的句柄自动载入
-            ③ 解析 NAV_DATA 到内存增删改/排序，点「保存并写回」用 FSA 直接覆盖文件
-       仅 Chrome / Edge 等 Chromium 浏览器可用（Firefox/Safari 无此 API）
+            ② 解锁后选数据源：
+               - 本机文件：File System Access 选 index.html / IndexedDB 记住的句柄自动载入（仅 Chrome / Edge）
+               - GitHub 仓库：用 GitHub Contents API 读写仓库文件（任意浏览器，需 Token）
+            ③ 解析 NAV_DATA 到内存增删改/排序，点「保存并写回」按数据源写回
        ============================================================ */
     /* 导航数据（内存中编辑，保存时直接写回 index.html 文件，无需服务端） */
     var NAV_DATA = [];
@@ -316,6 +341,11 @@
     var fileHandle = null;                  /* 当前选中的 index.html 文件句柄（File System Access） */
     var collapsedCats = {};                 /* 已折叠的分类 id 集合 */
     var filterText = '';                    /* 搜索关键字（按真实索引渲染，过滤态禁用排序） */
+    var dataSource = 'file';                /* 数据源：file=本机文件(FSA)，github=GitHub API */
+    var ghOwnerRepo = '';                   /* GitHub 仓库 owner/repo */
+    var ghBranch = 'main';                  /* 分支名 */
+    var ghPath = 'index.html';              /* 仓库内文件路径 */
+    var ghSha = '';                         /* 当前文件 blob 的 sha（写回时必须带上） */
 
     /* 是否支持 File System Access（仅 Chrome / Edge 等 Chromium 系浏览器） */
     var hasFSA = !!(window.showOpenFilePicker);
@@ -391,11 +421,6 @@
     /* 文件条显隐 */
     function showFileBar() { var b = document.getElementById('nvFileBar'); if (b) b.classList.remove('hidden'); }
     function hideFileBar() { var b = document.getElementById('nvFileBar'); if (b) b.classList.add('hidden'); }
-    function setFileBarUnsupported() {
-      var b = document.getElementById('nvFileBar');
-      if (b) { var m = b.querySelector('.nv_file_msg'); if (m) m.textContent = '当前浏览器不支持直接读写文件，请使用 Chrome / Edge，或恢复带 serve.js 鉴权的版本。'; }
-      var btn = document.getElementById('nvPickFile'); if (btn) btn.classList.add('hidden');
-    }
 
     function showLogin(msg) {
       document.getElementById('loginView').classList.remove('hidden');
@@ -473,8 +498,9 @@
         .catch(function (e) { setHint('选择文件失败：' + (e && e.message ? e.message : e)); });
     }
 
-    /* 重新从已选文件载入（放弃未保存改动） */
+    /* 重新从数据源载入（放弃未保存改动）：GitHub 走 API，本机走 FSA */
     function reloadFromFile() {
+      if (dataSource === 'github') { ghLoad(); return; }
       if (!fileHandle) { pickAndLoad(); return; }
       loadFromHandle(fileHandle, true).then(function () {
         setHint('已从文件重新载入（未保存的改动已丢弃）。');
@@ -494,8 +520,9 @@
       return out;
     }
 
-    /* 保存：直接写回选中的 index.html 文件（无服务端） */
+    /* 保存：按当前数据源写回（本机文件走 FSA，GitHub 走 API） */
     function doSave() {
+      if (dataSource === 'github') { ghSave(); return; }
       if (!fileHandle) { setHint('请先选择 index.html 文件。'); return; }
       setHint('正在保存…');
       ensurePermission(fileHandle, 'readwrite').then(function (granted) {
@@ -507,6 +534,85 @@
       }).then(function () {
         clearDirty(); setHint('已保存并写回 index.html ✓（刷新前台页面即可看到改动）');
       }).catch(function (e) { setHint('保存失败：' + (e && e.message ? e.message : e)); });
+    }
+
+    /* ---------- GitHub 数据源：通过 GitHub Contents API 读写仓库文件 ---------- */
+    /* UTF-8 安全的 base64 编解码（GitHub 内容接口用 base64 传输文件） */
+    function b64EncodeUnicode(str) {
+      return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function (m, p) {
+        return String.fromCharCode(parseInt(p, 16));
+      }));
+    }
+    function b64DecodeUnicode(str) {
+      return decodeURIComponent(Array.prototype.map.call(atob(str.replace(/\s/g, '')), function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+    }
+    /* 把当前 GitHub 连接信息存入 localStorage（含 Token，仅本机可用） */
+    function persistGh() {
+      try {
+        localStorage.setItem('adminGhToken', document.getElementById('ghToken').value.trim());
+        localStorage.setItem('adminGhRepo', ghOwnerRepo);
+        localStorage.setItem('adminGhBranch', ghBranch);
+        localStorage.setItem('adminGhPath', ghPath);
+        localStorage.setItem('adminSrc', 'github');
+      } catch (e) {}
+    }
+    /* 切换数据源：本机文件 / GitHub 仓库，并联动标签页与提示 */
+    function setDataSource(src) {
+      dataSource = src;
+      var fTab = document.querySelector('.nv_src_tab[data-src="file"]');
+      var gTab = document.querySelector('.nv_src_tab[data-src="github"]');
+      if (fTab) fTab.classList.toggle('active', src === 'file');
+      if (gTab) gTab.classList.toggle('active', src === 'github');
+      var fp = document.getElementById('nvFilePane'); if (fp) fp.classList.toggle('hidden', src !== 'file');
+      var gp = document.getElementById('nvGhPane'); if (gp) gp.classList.toggle('hidden', src !== 'github');
+      try { localStorage.setItem('adminSrc', src); } catch (e) {}
+    }
+    /* 从 GitHub 仓库读取 index.html 源码（GET contents，附带 blob 的 sha） */
+    function ghLoad() {
+      var token = document.getElementById('ghToken').value.trim();
+      var repo = document.getElementById('ghRepo').value.trim();
+      var branch = document.getElementById('ghBranch').value.trim() || 'main';
+      var path = document.getElementById('ghPath').value.trim() || 'index.html';
+      var st = document.getElementById('ghState');
+      if (!token) { alert('请填写 GitHub Token'); return; }
+      if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) { alert('仓库格式应为 owner/repo'); return; }
+      setHint('正在从 GitHub 读取…'); if (st) st.textContent = '读取中…';
+      var url = 'https://api.github.com/repos/' + repo + '/contents/' + encodeURIComponent(path) + '?ref=' + encodeURIComponent(branch);
+      fetch(url, { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' } })
+        .then(function (r) { return r.json().then(function (j) { return { r: r, j: j }; }); })
+        .then(function (o) {
+          if (!o.r.ok) throw new Error(o.j.message || ('HTTP ' + o.r.status));
+          rawHtml = b64DecodeUnicode(o.j.content);
+          ghOwnerRepo = repo; ghBranch = branch; ghPath = path; ghSha = o.j.sha;
+          dataSource = 'github'; persistGh();
+          parseData(); parseSearchEngines(); fillCatSelect(); renderManageList(); renderEngineList(); updateCount();
+          clearDirty(); hideFileBar(); if (st) st.textContent = '';
+          setHint('已从 GitHub 读取 ' + path + '。修改后点「保存并写回」写回仓库。');
+        })
+        .catch(function (e) {
+          if (st) st.textContent = '';
+          setHint('GitHub 读取失败：' + (e && e.message ? e.message : e) + '（检查 Token 权限 / 仓库与分支路径）');
+        });
+    }
+    /* 写回 GitHub 仓库（PUT contents，需带上原 blob 的 sha） */
+    function ghSave() {
+      var token = document.getElementById('ghToken').value.trim();
+      if (!token) { setHint('请先在「GitHub 仓库」标签页填写 Token 并连接。'); return; }
+      if (!ghSha) { setHint('尚未从 GitHub 读取，无法写回（请先连接并读取）。'); return; }
+      setHint('正在写回 GitHub…');
+      var body = { message: 'Update navigation data via admin.html', content: b64EncodeUnicode(buildHtml()), sha: ghSha, branch: ghBranch };
+      var url = 'https://api.github.com/repos/' + ghOwnerRepo + '/contents/' + encodeURIComponent(ghPath);
+      fetch(url, { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        .then(function (r) { return r.json().then(function (j) { return { r: r, j: j }; }); })
+        .then(function (o) {
+          if (!o.r.ok) throw new Error(o.j.message || ('HTTP ' + o.r.status));
+          ghSha = o.j.content.sha;
+          clearDirty();
+          setHint('已写回 GitHub ✓（GitHub Pages 通常几秒~1 分钟自动生效，详见仓库提交记录）');
+        })
+        .catch(function (e) { setHint('GitHub 写回失败：' + (e && e.message ? e.message : e)); });
     }
 
     /* 从 index.html 源码解析 NAV_DATA 到内存 */
@@ -902,10 +1008,23 @@
       if (hint) setHint(hint);
     }
 
-    /* 解锁后：尝试用已记住的文件句柄自动载入，否则提示选择文件 */
+    /* 解锁后：按上次数据源自动载入（GitHub 自动连接；本机优先用记住的文件句柄） */
     function afterUnlock() {
       showAdmin();
-      if (!hasFSA) { setFileBarUnsupported(); showFileBar(); return; }
+      /* 预填 GitHub 输入框（来自上次连接，存于 localStorage） */
+      try {
+        var t = localStorage.getItem('adminGhToken'); if (t) document.getElementById('ghToken').value = t;
+        var r = localStorage.getItem('adminGhRepo'); if (r) document.getElementById('ghRepo').value = r;
+        var b = localStorage.getItem('adminGhBranch'); if (b) document.getElementById('ghBranch').value = b;
+        var p = localStorage.getItem('adminGhPath'); if (p) document.getElementById('ghPath').value = p;
+      } catch (e) {}
+      var savedSrc = 'file';
+      try { savedSrc = localStorage.getItem('adminSrc') || 'file'; } catch (e) {}
+      if (savedSrc === 'github' && localStorage.getItem('adminGhToken')) {
+        setDataSource('github'); showFileBar(); ghLoad(); return;
+      }
+      setDataSource('file');
+      if (!hasFSA) { showFileBar(); setHint('当前浏览器不支持本机文件读写，请用「GitHub 仓库」标签页连接后管理。'); return; }
       restoreHandle().then(function (h) {
         if (!h) throw new Error('no-handle');
         return ensurePermission(h, 'read').then(function (granted) {
@@ -942,6 +1061,12 @@
       document.getElementById('nvSave').addEventListener('click', doSave);
       var nvPick = document.getElementById('nvPickFile');
       if (nvPick) nvPick.addEventListener('click', pickAndLoad);
+      /* 数据源切换：本机文件 / GitHub 仓库 */
+      document.querySelectorAll('.nv_src_tab').forEach(function (b) {
+        b.addEventListener('click', function () { setDataSource(b.getAttribute('data-src')); showFileBar(); });
+      });
+      var ghConn = document.getElementById('ghConnect');
+      if (ghConn) ghConn.addEventListener('click', ghLoad);
       var nvList = document.getElementById('nvManageList');
       if (nvList && !nvList._bound) { nvList.addEventListener('click', onManageClick); nvList._bound = true; }
       var seList = document.getElementById('seManageList');

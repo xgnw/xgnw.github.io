@@ -107,8 +107,6 @@
     }
       /* 单个导航项容器 */
     .ln_i { width: 100%; display: flex; justify-content: flex-start; }
-      /* 居中排列变体（用于导航居中场景） */
-    .ln_i.nav_center .ln_lgt { justify-content: center; }
       /* 左侧分类链接：圆角、悬停过渡、单行不换行 */
     a.ln_lgt {
       color: var(--fontcolor); width: fit-content; max-width: 100%; text-align: left; padding: 10px 16px;
@@ -323,12 +321,7 @@
       background: var(--card-bg); color: var(--secondtext);
       text-align: center; line-height: 1.7; font-size: 13px;
     }
-    .sf_t {
-      width: 100%; font-size: 14px; font-weight: 600; color: var(--fontcolor);
-      padding-bottom: 8px; border-bottom: var(--style-border-always); margin-bottom: 2px;
-    }
     .sf p { margin: 0; max-width: 720px; }
-    .sf_c { font-size: 12px; opacity: 0.85; margin-top: 4px; }
     /* 页脚链接 + 关于本站触发：去 dashed 虚线，hover 时从左滑出细下划线（深浅模式通用） */
     .sf a, .ab_open {
       color: var(--theme); text-decoration: none; font-weight: 500;
