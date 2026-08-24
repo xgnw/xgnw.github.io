@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2" />
+    <title>简单导航 - 简单但实用的导航</title>
+    <meta name="keywords" content="简单导航,导航,网址导航"/>
+    <meta name="description" content="简单但实用的导航"/>
+    <link rel="icon" href="https://i.loli.net/2020/08/13/zcOyYnZmAUNB1ap.jpg" />
+    <style>
+      /* 基础重置变量：白色与主题别名、主题色阴影 */
+    :root {
+      --white: #fff;  /* 白色 */
+      --main: var(--theme);  /* 主色别名（=主题色） */
+      --shadow-theme: 0 8px 12px -3px var(--theme-op);  /* 主题色阴影 */
+      --shadow-blackdeep: 0 2px 16px -3px rgba(0, 0, 0, .15);  /* 深色阴影（弹层用） */
+    }
+    :root {
+      --theme: #425AEF;  /* 主题主色（改这里换整体配色） */
+      --card-base: calc(8 * 17px + 2.4rem);  /* 卡片基础宽度：越大一行列数越少 */
+      --theme-op: #4259ef23;  /* 主题色半透明版 */
+      --fontcolor: #363636;  /* 主文字颜色 */
+      --background: #fdfdfe;  /* 页面背景色 */
+      --secondtext: rgba(60, 60, 67, 0.8);  /* 次要文字颜色 */
+      --secondbg: #f7f7f9;  /* 次要背景（hover 等） */
+      --card-bg: #fff;  /* 卡片 / 菜单背景 */
+      --card-border: #e3e8f7;  /* 边框颜色 */
+      --shadow-border: 0 8px 16px -4px #2c2d300c;  /* 卡片阴影 */
+      --style-border-always: 1px solid var(--card-border);  /* 默认边框 */
+      --style-border-hover-always: 1px solid var(--main);  /* 主题色边框（hover） */
+    }
+      /* 深色模式变量覆盖（手动选 dark 时生效） */
+    :root[data-theme="dark"] {
+      --fontcolor: #e8e8ed;  /* 主文字颜色 */
+      --background: #0e0e10;  /* 页面背景色 */
+      --card-bg: #1a1a1f;  /* 卡片 / 菜单背景 */
+      --secondbg: #161619;  /* 次要背景（hover 等） */
+      --secondtext: rgba(200, 200, 210, 0.8);  /* 次要文字颜色 */
+      --card-border: #2c2c34;  /* 边框颜色 */
+    }
+      /* 跟随系统时，系统为深色则套用以下变量 */
+    @media (prefers-color-scheme: dark) {
+      :root[data-theme="auto"] {
+        --fontcolor: #e8e8ed;  /* 主文字颜色 */
+        --background: #0e0e10;  /* 页面背景色 */
+        --card-bg: #1a1a1f;  /* 卡片 / 菜单背景 */
+        --secondbg: #161619;  /* 次要背景（hover 等） */
+        --secondtext: rgba(200, 200, 210, 0.8);  /* 次要文字颜色 */
+        --card-border: #2c2c34;  /* 边框颜色 */
+      }
+    }
+    /* ============ 全局基础样式 ============ */
+  /* 选中文本时的配色 */
+::selection { background: var(--fontcolor); color: var(--background); }
+      /* 页面基础：字体、背景、禁止横向溢出 */
+    body {
+      font-family: "SF Pro Display","SF Pro Icons","Helvetica Neue","Helvetica","Arial",sans-serif;
+      font-size: 14px; color: var(--fontcolor); background: var(--background);
+      line-height: 1.5; margin: 0; padding: 0; -webkit-tap-highlight-color: rgba(0,0,0,0);
+      overflow-x: hidden;
+    }
+      /* 根元素同样禁止横向滚动条 */
+    html { overflow-x: hidden; }
+      /* 链接去下划线 */
+    a { text-decoration-line: none; }
+      /* 段落去默认外边距 */
+    p { margin: 0; }
+      /* 标题去默认外边距 */
+    h2 { margin: 0; }
+      /* 全局盒模型与细滚动条（4px） */
+    * { box-sizing: border-box; }
+      /* WebKit 滚动条整体样式 */
+    *::-webkit-scrollbar { width: 4px; height: 4px; background: var(--background); }
+      /* WebKit 滚动条滑块样式 */
+    *::-webkit-scrollbar-thumb { background: var(--secondtext); border-radius: 6px; border: 1px solid var(--background); }
+    /* ============ 顶栏 / 左菜单 / 内容容器 ============ */
+  /* 分类版块容器：纵向排列各分类 */
+.lg { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+      /* 整体框架：左侧菜单 + 右侧内容（占满视口高度） */
+    .sns { display: flex; width: 100%; height: 100vh; }
+      /* 右侧内容区弹性容器 */
+    .lp { display: flex; flex: 1; }
+      /* 移动端汉堡菜单按钮（桌面隐藏） */
+    a.sn { display: flex; align-items: center; justify-content: center; color: var(--fontcolor); }
+      /* 汉堡图标尺寸 */
+    a.sn svg { width: 22px; height: 22px; display: block; }
+      /* 站点名文字 */
+    .ns_n { color: var(--fontcolor); font-size: 16px; }
+      /* 左侧导航侧栏：自适应宽度、右侧边框、纵向排列 */
+    .nl {
+      flex: 0 0 auto; display: flex; flex-direction: column; width: fit-content; min-width: 160px; height: 100%;
+      background: var(--card-bg); align-items: stretch; gap: 1rem;
+      border-right: var(--style-border-always); position: relative; padding: 0 1.2rem;
+    }
+      /* 右侧内容内边距与背景 */
+    .lp_c {
+      display: flex; flex-direction: column; flex: 1; padding: 1rem; gap: 0.5rem;
+      background: var(--card-bg); position: relative;
+    }
+      /* 左上角 Logo 标题 */
+    .sl {
+      display: flex; justify-content: center; align-items: center;
+      width: 100%; min-height: 56px; margin-top: 1rem;
+      font-size: 18px; font-weight: 700; color: var(--fontcolor);
+      letter-spacing: 0.5px;
+    }
+      /* 单个导航项容器 */
+    .ln_i { width: 100%; display: flex; justify-content: flex-start; }
+      /* 居中排列变体（用于导航居中场景） */
+    .ln_i.nav_center .ln_lgt { justify-content: center; }
+      /* 左侧分类链接：圆角、悬停过渡、单行不换行 */
+    a.ln_lgt {
+      color: var(--fontcolor); width: fit-content; max-width: 100%; text-align: left; padding: 10px 16px;
+      border-radius: 12px; transition: 0.3s; display: block; white-space: nowrap;
+      font-size: 16px; cursor: pointer;
+    }
+      /* 分类标题行：图标条 + 文字 + 右侧分隔线 */
+    .lg_tc {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 20px; line-height: 1.2; padding: 0.2rem 0; margin-bottom: 0.15rem;
+    }
+      /* 标题左侧主题色竖条装饰 */
+    .lg_tc::before {
+      content: ""; width: 4px; height: 1.05em; border-radius: 4px;
+      background: var(--theme); flex: none;
+    }
+      /* 标题右侧自动延伸的分隔线 */
+    .lg_tc::after {
+      content: ""; flex: 1; height: 1px; margin-left: 6px;
+      background: var(--card-border);
+    }
+      /* 分类标题文字 */
+    .lg_t { font-size: 20px; font-weight: 700; color: var(--fontcolor); letter-spacing: 0.5px; }
+      /* 移动端顶部栏（桌面 display:none） */
+    .nav {
+      height: 60px; background: var(--card-bg); width: 100%; position: fixed; top: 0; left: 0;
+      z-index: 100; align-items: center; padding: 0 1rem; display: none; gap: 1rem;
+      border-bottom: var(--style-border-always);
+    }
+      /* 左侧导航滚动容器：默认隐藏滚动条，预留栏宽防抖动 */
+    .ln_g {
+      width: 100%; flex: 1; display: flex; flex-direction: column; gap: 8px;
+      justify-content: flex-start; align-items: flex-start; overflow: hidden; overflow-y: scroll;
+      padding: 0 6px 0 12px;
+      scrollbar-width: none; scrollbar-color: var(--secondtext) var(--background);
+      scrollbar-gutter: stable;
+    }
+      /* 默认隐藏 WebKit 滚动条 */
+    .ln_g::-webkit-scrollbar { width: 0; background: transparent; }
+      /* 滚动时加 ssb 类显示细滚动条 */
+    .ln_g.ssb { scrollbar-width: thin; }
+    .ln_g.ssb::-webkit-scrollbar { width: 4px; background: var(--background); }
+    .ln_g.ssb::-webkit-scrollbar-thumb { background: var(--secondtext); border-radius: 6px; border: 1px solid var(--background); }
+    .ln_g.ssb::-webkit-scrollbar-track { background: var(--background); }
+      /* 右侧可滚动内容区（scroll spy 与回顶监听对象） */
+    #wc { display: flex; flex-direction: column; flex: 1; overflow-y: scroll; gap: 1.2rem; background: var(--card-bg); scroll-behavior: smooth; }
+      /* 列表去默认符号 */
+    li { list-style: none; }
+    /* ============ 搜索栏 ============ */
+  /* 搜索栏整行：引擎切换 + 输入框 + 主题按钮 */
+.ws { display: flex; gap: 8px; align-items: stretch; }
+      /* 搜索引擎切换按钮（主题色底白字） */
+    .se_tb {
+      display: flex; align-items: center; justify-content: center;
+      height: 44px; min-width: 96px; padding: 0 18px;
+      background: var(--theme); color: #fff;
+      border: none; border-radius: 12px;
+      font-size: 14px; font-weight: 500; cursor: pointer; user-select: none;
+      white-space: nowrap;
+    }
+    .se_tb:hover { opacity: 0.9; }
+      /* 搜索引擎切换外层包裹 */
+    .se_w {
+      display: flex; align-items: center;
+    }
+      /* 搜索表单：弹性一行、圆角边框 */
+    #searchForm {
+      flex: 1; display: flex; align-items: stretch;
+      height: 44px; border-radius: 12px; border: var(--style-border-always);
+      background: var(--card-bg); overflow: hidden;
+    }
+      /* 搜索输入框：透明背景、继承文字色 */
+    #searchForm input {
+      flex: 1; height: 100%; border: none; outline: none;
+      padding: 0 14px; font-size: 15px;
+      background: transparent; color: var(--fontcolor);
+    }
+      /* 搜索提交按钮（主题色） */
+    #searchForm > button[type="submit"] {
+      height: 100%; padding: 0 24px; background: var(--theme);
+      color: #fff; border: none; cursor: pointer; font-size: 15px; font-weight: 500;
+      display: flex; align-items: center; justify-content: center; white-space: nowrap;
+    }
+      /* 提交按钮悬停 */
+    #searchForm > button[type="submit"]:hover { opacity: 0.9; }
+      /* 搜索引擎下拉面板：绝对定位覆盖右侧内容区 */
+    .se {
+      position: absolute; left: 1rem; right: 1rem; top: 60px; z-index: 50;
+      background: var(--card-bg); border: var(--style-border-always); border-radius: 12px;
+      box-shadow: var(--shadow-blackdeep); padding: 16px; display: none;
+    }
+      /* 面板展开状态 */
+    .se.open { display: block; }
+      /* 面板标题文字 */
+    .se_t {
+      font-size: 15px; color: var(--fontcolor); font-weight: 600;
+      margin-bottom: 12px;
+    }
+      /* 引擎网格：auto-fit 自动按宽度分列 */
+    .se_g {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 8px;
+    }
+      /* 单个引擎按钮 */
+    .se_g .ei {
+      display: flex; align-items: center; justify-content: center;
+      height: 40px; padding: 0 8px;
+      background: var(--secondbg); border-radius: 8px; border: none;
+      font-size: 14px; color: var(--fontcolor);
+      cursor: pointer; user-select: none; transition: 0.2s;
+    }
+    .se_g .ei:hover { opacity: 0.75; }
+    .se_g .ei.active { background: var(--theme); color: #fff; opacity: 1; }
+      /* 主题切换按钮（图标容器） */
+    .tt button {
+      height: 44px; width: 44px; background: none; border: var(--style-border-always); cursor: pointer;
+      color: var(--fontcolor); display: flex; align-items: center; justify-content: center;
+      border-radius: 12px; padding: 0; transition: 0.3s;
+    }
+    .tt button svg { width: 22px; height: 22px; display: block; }
+    @media (hover:hover) {
+      .tt button:hover { background: var(--secondbg); color: var(--theme); border: var(--style-border-hover-always); }
+      a.lg_cl:hover { background: var(--theme); color: var(--white); box-shadow: var(--shadow-theme); }
+      a.ln_lgt:hover { background: var(--secondbg); }
+      a.ln_lgt.active { background: var(--theme); color: var(--white); font-weight: 600; }
+      #searchForm button:hover { color: var(--theme); }
+    }
+    /* 卡片 */
+      /* 卡片内部横向行：图标 + 信息 */
+    .lg_ci {
+      display: flex; justify-content: space-between; width: 100%; align-items: center; padding: 0.75rem 1.15rem;
+    }
+      /* 卡片网格：auto-fill 自适应列数，少量卡片时不会铺满整行 */
+    .lg_c {
+      width: 100%; display: grid; gap: 8px;
+      grid-template-columns: repeat(auto-fill, minmax(var(--card-base), 1fr));
+    }
+      /* 单张卡片链接：圆角、阴影、边框、溢出隐藏 */
+    a.lg_cl {
+      display: flex; min-height: 76px;
+      color: var(--fontcolor); border-radius: 12px; background: var(--card-bg);
+      transition: 0.3s; box-shadow: var(--shadow-border); border: var(--style-border-always);
+      text-decoration: none; overflow: hidden;
+    }
+      /* 卡片图标与信息横向排列 */
+    .lg_cii { display: flex; align-items: center; width: 100%; }
+      /* 卡片信息纵向列（标题 + 描述） */
+    .lg_ciic { display: flex; flex-direction: column; width: 100%; min-width: 0; }
+      /* 卡片标题：最大一行省略（比分类标题小一档） */
+    p.lg_ciict {
+      font-size: 15px; font-weight: 600; color: var(--fontcolor); line-height: 1.35;
+      display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;
+    }
+      /* 卡片描述：最大两行省略、半透明（比标题再小一档） */
+    p.lg_ciicd {
+      font-size: 12px; opacity: 0.75; color: inherit;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; line-height: 1.4;
+    }
+    /* ============ 响应式（≤798px / ≤480px） ============ */
+@media screen and (max-width: 798px) {
+      .nl { position: fixed; top: 60px; left: 0; bottom: 0; z-index: 10; width: fit-content; min-width: 0; max-width: 85%; transform: translateX(-100%); transition: transform 0.3s; border-right: var(--style-border-always); box-shadow: var(--shadow-blackdeep); background: var(--card-bg); }
+      .nl.active { transform: translateX(0); }
+      .nav { display: flex; }
+      .lp_c { margin-top: 60px; padding: 0.75rem; }
+      .sl { margin-top: 1rem; }
+      .ns_n { color: var(--fontcolor); font-size: 16px; flex-shrink: 0; }
+      .nav { display: flex; padding: 0 0.75rem; gap: 0.6rem; }
+      .ws { gap: 6px; min-width: 0; flex: 1; }
+      .se_tb { min-width: 72px; padding: 0 12px; font-size: 13px; height: 40px; }
+      #searchForm { height: 40px; }
+      #searchForm > button[type="submit"] { padding: 0 14px; font-size: 14px; }
+      #searchForm input { padding: 0 10px; font-size: 14px; min-width: 0; }
+      .tt button { height: 40px; width: 40px; }
+      .sn { height: 40px; width: 40px; }
+      .sn svg, .tt button svg { width: 20px; height: 20px; }
+      /* ============ 返回顶部 ============ */
+  /* 返回顶部按钮：固定右下，默认隐藏 */
+.bt { right: 16px; bottom: 16px; height: 40px; width: 40px; }
+      .lg_c { gap: 6px; }
+      a.lg_cl { min-width: 0; }
+    }
+    @media screen and (max-width: 480px) {
+      .nav { padding: 0 0.5rem; gap: 0.4rem; }
+      .ns_n { display: none; }
+      .se_tb { min-width: 60px; padding: 0 10px; font-size: 12px; }
+      #searchForm input { padding: 0 8px; font-size: 13px; }
+      #searchForm > button[type="submit"] { padding: 0 12px; font-size: 13px; }
+      .lg { gap: 10px; margin-top: 10px; }
+      .lg_tc { font-size: 16px; }
+      .lg_tc::before { margin-right: 8px; }
+      .se { left: 0.5rem !important; right: 0.5rem !important; top: 52px !important; padding: 12px; }
+    }
+    .bt {
+      position: fixed; right: 24px; bottom: 24px; z-index: 200;
+      height: 44px; width: 44px; border-radius: 12px;
+      background: var(--card-bg); color: var(--fontcolor);
+      border: var(--style-border-always); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; visibility: hidden; transform: translateY(8px);
+      transition: 0.3s; box-shadow: var(--shadow-border);
+    }
+    .bt.show { opacity: 1; visibility: visible; transform: translateY(0); }
+    .bt svg { width: 22px; height: 22px; }
+    @media (hover:hover) {
+      .bt:hover { background: var(--theme); color: var(--white); border: var(--style-border-hover-always); }
+    }
+    /* ============ 版权区 ============ */
+  /* 页面底部版权/免责声明区 */
+.sf {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      margin-top: 1rem; padding: 16px 14px;
+      border: var(--style-border-always); border-radius: 10px;
+      background: var(--card-bg); color: var(--secondtext);
+      text-align: center; line-height: 1.7; font-size: 13px;
+    }
+    .sf_t {
+      width: 100%; font-size: 14px; font-weight: 600; color: var(--fontcolor);
+      padding-bottom: 8px; border-bottom: var(--style-border-always); margin-bottom: 2px;
+    }
+    .sf p { margin: 0; max-width: 720px; }
+    .sf_c { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+    /* 页脚链接 + 关于本站触发：去 dashed 虚线，hover 时从左滑出细下划线（深浅模式通用） */
+    .sf a, .ab_open {
+      color: var(--theme); text-decoration: none; font-weight: 500;
+      position: relative; background: transparent; border: none; padding: 0;
+      transition: color 0.2s ease, opacity 0.2s ease;
+    }
+    .ab_open { cursor: pointer; }
+    .sf a:hover, .ab_open:hover { opacity: 0.72; }
+    .sf a::after, .ab_open::after {
+      content: ""; position: absolute; left: 1px; right: 1px; bottom: -3px;
+      height: 1px; background: currentColor;
+      transform: scaleX(0); transform-origin: left center;
+      transition: transform 0.25s ease;
+    }
+    .sf a:hover::after, .ab_open:hover::after { transform: scaleX(1); }
+    /* ============ 关于本站 弹窗 ============ */
+    .hidden { display: none !important; }
+    .ab_modal { position: fixed; inset: 0; z-index: 60; padding: 16px;
+                display: flex; align-items: center; justify-content: center;
+                background: rgba(0, 0, 0, .45); }
+    .ab_card { width: 560px; max-width: 94vw; max-height: 82vh; overflow-y: auto;
+               border: var(--style-border-always); border-radius: 14px;
+               background: var(--card-bg); color: var(--fontcolor);
+               padding: 22px 24px; box-shadow: var(--shadow-blackdeep); }
+    /* 关于本站 弹窗 标题居中：字号略增 + 上下 padding + 底部细分割线 */
+    .ab_card h3 { margin: 0 -24px 16px; padding: 0 24px 14px; font-size: 18px;
+                  text-align: center; font-weight: 600;
+                  border-bottom: 1px solid var(--border-color, rgba(0,0,0,.08)); }
+    .ab_sec { margin-bottom: 18px; }
+    .ab_sec:last-child { margin-bottom: 0; }
+    .ab_sec h4 { margin: 0 0 8px; font-size: 14px; color: var(--theme); font-weight: 600; }
+    .ab_sec p { margin: 0 0 8px; font-size: 13px; line-height: 1.7; color: var(--secondtext); }
+    .ab_sec p:last-child { margin-bottom: 0; }
+    .ab_sec ol { margin: 0; padding-left: 20px; }
+    .ab_sec li { font-size: 13px; line-height: 1.7; color: var(--secondtext); margin-bottom: 6px; }
+    .ab_card code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;
+                    background: var(--background); color: var(--fontcolor);
+                    padding: 1px 5px; border-radius: 4px; }
+    .ab_close { float: right; margin: -4px -4px 0 0; border: none; background: transparent;
+                color: var(--secondtext); font-size: 22px; line-height: 1; cursor: pointer; }
+    .ab_close:hover { color: var(--theme); }
+    </style>
+    <script>
+        /* 首屏前同步应用主题，避免深色模式闪烁 */
+      (function () {
+        try {
+          var m = localStorage.getItem('themePref');
+          if (m !== 'light' && m !== 'dark' && m !== 'auto') m = 'auto';
+          var dark = (m === 'dark') || (m === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        } catch (e) {}
+      })();
+    </script>
+    <script>
+!function(p){"use strict";!function(t){var s=window,e=document,i=p,c="".concat("https:"===e.location.protocol?"https://":"http://","sdk.51.la/js-sdk-pro.min.js"),n=e.createElement("script"),r=e.getElementsByTagName("script")[0];n.type="text/javascript",n.setAttribute("charset","UTF-8"),n.async=!0,n.src=c,n.id="LA_COLLECT",i.d=n;var o=function(){s.LA.ids.push(i)};s.LA?s.LA.ids&&o():(s.LA=p,s.LA.ids=[],o()),r.parentNode.insertBefore(n,r)}()}({id:"CI2hBTi7jZXBxEp6",ck:"CI2hBTi7jZXBxEp6"});
+</script>
+  </head>
+  <body>
+      <!-- 页面整体框架：左侧菜单 + 右侧内容（占满视口高度） -->
+    <section>
+      <div class="sns">
+          <!-- 移动端顶部栏（桌面隐藏）：汉堡菜单按钮 + 站点名 -->
+        <div class="nav">
+          <a class="sn" onclick="showNav()" href="javascript:void(0)" aria-label="菜单">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </a>
+          <a class="ns_n" href="javascript:void(0)">简单导航</a>
+        </div>
+
+          <!-- 左侧导航侧栏 -->
+        <div class="nl" id="nl">
+          <div class="sl">简单导航</div>
+            <!-- 分类菜单滚动容器：菜单项 .ln_i 由 renderNav() 按 NAV_DATA 动态生成 -->
+          <div class="ln_g" id="ln_g">
+          </div>
+
+        </div>
+
+          <!-- 右侧可滚动内容区（主题切换/回顶/scroll spy 监听对象） -->
+        <div id="wc">
+            <!-- 右侧内容弹性容器 -->
+          <div class="lp">
+              <div class="lp_c">
+
+                <!-- 搜索栏整行：引擎切换 + 搜索表单 + 主题切换按钮 -->
+              <div class="ws">
+                <div class="se_w" id="searchEngineWrap">
+                  <button type="button" id="searchEngineBtn" class="se_tb" title="切换搜索引擎：百度" aria-label="切换搜索引擎">百度</button>
+                  <div class="se" id="searchEnginePanel">
+                    <div class="se_t">选择您的默认搜索引擎：</div>
+                    <div class="se_g" id="searchEngineList"></div>
+                  </div>
+                </div>
+                <form id="searchForm">
+                  <input type="text" id="searchInput" name="wd" placeholder="选择引擎，输入关键字，回车/Enter搜索" autocomplete="off" />
+                  <button type="submit" aria-label="搜索">搜索</button>
+                </form>
+                <div class="tt">
+                  <button id="themeToggle" type="button" title="切换主题（亮色/深色/跟随系统）" aria-label="切换主题"></button>
+                </div>
+              </div>
+              <!-- 底部版权 / 免责声明区 -->
+            <footer class="sf">
+              <p><a href="https://jiandan.neocities.org/" target="_blank" rel="noopener">镜像站点</a>
+              <a id="abOpen" class="ab_open">关于本站 · 免责声明</a></p>
+              <p>Copyright  2019-<script>document.currentScript.insertAdjacentHTML('afterEnd',new Date().getFullYear())</script> Powered by <a href="https://432600.xyz/" target="_blank" rel="noopener">简单导航网</a></p>
+              <p><script language="JavaScript">document.write("最后更新时间: " + document.lastModified);</script></p>
+             </footer>
+
+            <!-- 关于本站 弹窗（点击页脚「关于本站」打开） -->
+            <div class="ab_modal hidden" id="abModal">
+              <div class="ab_card">
+                <button type="button" class="ab_close" id="abClose" title="关闭">×</button>
+                <h3>关于本站</h3>
+                <div class="ab_sec">
+                  <h4>本站是怎么做出来的</h4>
+                  <ol>
+                    <li>本站脱胎于 <a href="https://432600.xyz/" target="_blank" style="color:var(--theme)">简单导航网</a>（432600.xyz）的开源「简单导航」模板，在其基础上做二次开发。</li>
+                    <li>导航数据集中维护在页面底部的 <code>NAV_DATA</code> 数组里，改数据即改页面，不需要任何构建工具或后端服务。</li>
+                    <li>管理工作独立成 <code>admin.html</code>：在 Chrome / Edge 里直接用浏览器读写本机 <code>index.html</code>（File System Access API），可增删分类 / 链接 / 搜索引擎并一键写回，无需起服务。</li>
+                    <li>卡片网格采用 CSS Grid <code>auto-fill</code> 自适应列数，分类下只有少数链接时也不会被拉伸铺满整行。</li>
+                    <li>主题支持浅色 / 深色 / 跟随系统，偏好存于 <code>localStorage</code>。</li>
+                  </ol>
+                </div>
+                <div class="ab_sec">
+                  <h4>免责声明</h4>
+                  <p>本站仅提供网址导航收录服务，不对所收录网站的内容、交易及合法性承担任何责任。</p>
+                  <p>如您认为收录的站点侵害了您的合法权益，请通过 <a href="mailto:fflpweb@gmail.com" style="color:var(--theme)">fflpweb@gmail.com</a> 联系我们，我们将在核实后及时移除。</p>
+                  <p>本站为个人非商业用途的导航收藏，与所收录站点无任何隶属或合作关系。</p>
+                </div>
+              </div>
+            </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <script>
+    /* ============================================================
+       前台页面脚本：由 NAV_DATA 数据驱动渲染左侧菜单与右侧分类卡片，
+       并实现移动端菜单显隐、scroll spy 高亮、主题切换、返回顶部、搜索引擎切换。
+       ============================================================ */
+  /* 切换左侧菜单显隐（移动端汉堡按钮 onclick 调用） */
+function showNav() {
+        document.getElementById("nl").classList.toggle("active");
+      }
+        /* 点击分类后收起左侧菜单 */
+      function hideNav() {
+        const navList = document.getElementById('nl');
+        if (navList.classList.contains('active')) {
+          navList.classList.remove('active');
+        }
+      }
+        /* 点击菜单外部区域（非按钮/非菜单内）自动收起 */
+      document.addEventListener('click', function (e) {
+        const navList = document.getElementById('nl');
+        if (!navList.classList.contains('active')) return;
+        if (navList.contains(e.target)) return;
+        if (e.target.closest('.sn')) return;
+        navList.classList.remove('active');
+      });
+
+/* ===== 数据驱动渲染：由 NAV_DATA 生成左侧菜单 + 右侧分类卡片 ===== */
+function renderNav() {
+  var navList = document.getElementById('ln_g');     /* 左侧菜单容器 */
+  var contentBox = document.querySelector('.lp_c');  /* 右侧内容容器（搜索栏之后插入分类） */
+  if (!navList || !contentBox) return;
+  /* 先清空上一次渲染结果，保证可重复渲染（添加分类/链接后实时刷新不重复） */
+  Array.prototype.slice.call(navList.querySelectorAll('.ln_i')).forEach(function (n) { n.remove(); });
+  Array.prototype.slice.call(contentBox.querySelectorAll('.lg')).forEach(function (n) { n.remove(); });
+  var frag = document.createDocumentFragment();
+  NAV_DATA.forEach(function (cat) {
+    /* —— 左侧菜单项 —— */
+    var item = document.createElement('div'); item.className = 'ln_i';
+    var a = document.createElement('a'); a.className = 'ln_lgt';
+    a.setAttribute('data-target', cat.id);
+    a.setAttribute('href', 'javascript:void(0)');
+    a.setAttribute('onclick', 'hideNav()');          /* 移动端点击后收起菜单 */
+    a.textContent = cat.name;
+    item.appendChild(a); navList.appendChild(item);
+    /* —— 右侧分类块 —— */
+    var sec = document.createElement('div'); sec.className = 'lg';
+    var tc = document.createElement('div'); tc.className = 'lg_tc';
+    var h2 = document.createElement('h2'); h2.className = 'lg_t'; h2.id = cat.id; h2.textContent = cat.name;
+    tc.appendChild(h2); sec.appendChild(tc);
+    var grid = document.createElement('div'); grid.className = 'lg_c';
+    cat.links.forEach(function (l) {
+      var card = document.createElement('a'); card.className = 'lg_cl';
+      card.href = l.url; card.target = '_blank';
+      var ci = document.createElement('div'); ci.className = 'lg_ci';
+      var cii = document.createElement('div'); cii.className = 'lg_cii';
+      var ciic = document.createElement('div'); ciic.className = 'lg_ciic';
+      var t = document.createElement('p'); t.className = 'lg_ciict'; t.textContent = l.title;
+      var d = document.createElement('p'); d.className = 'lg_ciicd'; d.textContent = l.desc;
+      ciic.appendChild(t); ciic.appendChild(d);
+      cii.appendChild(ciic); ci.appendChild(cii); card.appendChild(ci);
+      grid.appendChild(card);
+    });
+    sec.appendChild(grid); frag.appendChild(sec);
+  });
+  /* 插入到版权区(.sf)之前，确保版权区始终位于内容（卡片）下方 */
+  var footer = contentBox.querySelector('.sf');
+  if (footer) {
+    contentBox.insertBefore(frag, footer);
+  } else {
+    contentBox.appendChild(frag);
+  }
+}
+
+var siteNav = {
+          /* 绑定左侧分类点击：平滑滚动到对应版块（阻止默认跳转） */
+        initNavLink: function() {
+          const navLinks = document.querySelectorAll(".ln_lgt:not(.nnj)");
+          navLinks.forEach(link => {
+            link.addEventListener("click", function (event) {
+              event.preventDefault();
+              const targetId = this.getAttribute("data-target");
+              const targetElement = document.querySelector(`#${targetId}`);
+              if (targetElement) {
+                targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+              } else {
+                  // 目标不存在（如直接打开页面）：暂存目标，回首页后再跳
+                localStorage.setItem('targetId', targetId);
+                window.location.href = "/";
+              }
+            });
+          });
+          this.checkAndExecuteStoredTask();
+        },
+          /* 若上次跳转目标未命中，页面加载后补做滚动 */
+        checkAndExecuteStoredTask: function() {
+          const targetId = localStorage.getItem('targetId');
+          if (targetId) {
+            const targetElement = document.querySelector(`#${targetId}`);
+            if (targetElement) {
+              targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+            localStorage.removeItem('targetId');
+          }
+        },
+          /* 左侧菜单滚动时临时显示细滚动条，停下 500ms 后隐藏 */
+        listenNavScroll: function() {
+          const scrollableElement = document.getElementById('ln_g');
+          scrollableElement.addEventListener('scroll', function () {
+            scrollableElement.classList.add('ssb');
+            clearTimeout(scrollableElement.hideScrollbarTimeout);
+            scrollableElement.hideScrollbarTimeout = setTimeout(() => {
+              scrollableElement.classList.remove('ssb');
+            }, 500);
+          });
+        },
+          /* 滚动监听：右侧可见分类 ↔ 高亮左侧对应菜单项 */
+        initScrollSpy: function() {
+          const content = document.getElementById('wc');
+          const titles = Array.prototype.slice.call(document.querySelectorAll('.lg_t'));
+          const navLinks = Array.prototype.slice.call(document.querySelectorAll('.ln_lgt'));
+          if (!content) return;
+          /* 移除上一次绑定的监听，避免重复渲染后叠加多个 scroll/resize 监听 */
+          if (this._onScroll) {
+            content.removeEventListener('scroll', this._onScroll);
+            window.removeEventListener('resize', this._onScroll);
+          }
+          if (!titles.length || !navLinks.length) return;
+
+          var currentId = null;
+            /* 更新左侧菜单高亮态（仅当前分类加 active） */
+          function setActive(id) {
+            if (id === currentId) return;
+            currentId = id;
+            navLinks.forEach(function (l) {
+              l.classList.toggle('active', l.getAttribute('data-target') === id);
+            });
+          }
+
+            /* 计算当前应高亮的分类 id */
+          function onScroll() {
+              // 触发线：标题进入导航栏下方 110px 即判定为当前分类
+            var offset = 110;
+            var activeId = titles[0].id;
+            for (var i = 0; i < titles.length; i++) {
+              if (titles[i].getBoundingClientRect().top - offset <= 0) {
+                activeId = titles[i].id;
+              } else {
+                break;
+              }
+            }
+              // 滚动到底部时高亮最后一个分类
+            if (content.scrollHeight - content.scrollTop - content.clientHeight < 4) {
+              activeId = titles[titles.length - 1].id;
+            }
+            setActive(activeId);
+          }
+
+          this._onScroll = onScroll;   /* 记下引用以便下次移除 */
+          content.addEventListener('scroll', onScroll, { passive: true });
+          window.addEventListener('resize', onScroll);
+          onScroll();
+        }
+      };
+          /* 主题切换 */
+var themeSwitcher = {
+          /* 主题循环顺序：跟随系统 → 亮色 → 深色 */
+        order: ['auto', 'light', 'dark'],
+        icons: {
+          auto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2=" 21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+          light: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.5" y1="4.5" x2="6.5" y2="6.5"/><line x1="17.5" y1="17.5" x2="19.5" y2="19.5"/><line x1="4.5" y1="19.5" x2="6.5" y2="17.5"/><line x1="17.5" y1="6.5" x2="19.5" y2="4.5"/></svg>',
+          dark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'
+        },
+        titles: { auto: '当前：跟随系统', light: '当前：亮色', dark: '当前：深色' },
+          /* 读取已保存主题，非法值回退 auto */
+        getStored: function () {
+          var v = localStorage.getItem('themePref');
+          return this.order.indexOf(v) !== -1 ? v : 'auto';
+        },
+          /* 应用主题：写 data-theme + 渲染图标与 title */
+        apply: function (mode) {
+          document.documentElement.setAttribute('data-theme', mode);
+          var btn = document.getElementById('themeToggle');
+          btn.innerHTML = this.icons[mode];
+          btn.title = this.titles[mode];
+          btn.setAttribute('aria-label', this.titles[mode]);
+        },
+          /* 切换到下一个主题并持久化 */
+        next: function () {
+          var cur = this.getStored();
+          var idx = this.order.indexOf(cur);
+          var nxt = this.order[(idx + 1) % this.order.length];
+          localStorage.setItem('themePref', nxt);
+          this.apply(nxt);
+        },
+          /* 初始化：渲染当前主题、绑定切换、监听系统主题变化 */
+        init: function () {
+          this.apply(this.getStored());
+          document.getElementById('themeToggle').addEventListener('click', function () {
+            themeSwitcher.next();
+          });
+          var self = this;
+          if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+              if (self.getStored() === 'auto') { self.apply('auto'); }
+            });
+          }
+        }
+      };
+        /* 页面就绪后初始化全部交互 */
+      document.addEventListener('DOMContentLoaded', function () {
+        renderNav();   /* 先由数据渲染菜单与卡片 */
+        siteNav.initNavLink();
+        siteNav.listenNavScroll();
+        siteNav.initScrollSpy();
+        themeSwitcher.init();
+
+          /* 返回顶部：滚动超过 200px 才显示按钮 */
+        var backBtn = document.getElementById('backToTop');
+        var scrollBox = document.getElementById('wc');
+        scrollBox.addEventListener('scroll', function () {
+          if (scrollBox.scrollTop > 200) backBtn.classList.add('show');
+          else backBtn.classList.remove('show');
+        });
+          /* 点击平滑滚动回顶部 */
+        backBtn.addEventListener('click', function () {
+          scrollBox.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+          /* 关于本站弹窗：打开 / 关闭（点遮罩或按 Esc 关闭） */
+        var abModal = document.getElementById('abModal');
+        var abOpen = document.getElementById('abOpen');
+        var abClose = document.getElementById('abClose');
+        if (abOpen) abOpen.addEventListener('click', function () { abModal.classList.remove('hidden'); });
+        if (abClose) abClose.addEventListener('click', function () { abModal.classList.add('hidden'); });
+        if (abModal) abModal.addEventListener('click', function (e) { if (e.target === abModal) abModal.classList.add('hidden'); });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && abModal && !abModal.classList.contains('hidden')) abModal.classList.add('hidden');
+        });
+      });
+    </script>
+    <!-- 搜索引擎配置：name 显示名 + url 搜索地址（搜索时在其后拼接 encodeURIComponent(关键字)）。
+         改这里即可增删引擎；管理页 admin.html 也能直接编辑此块并写回文件。 -->
+    <script>
+      /* 搜索引擎列表：name 显示名 + url 搜索地址（含查询参数占位，搜索时在其后拼接关键字） */
+      window.SEARCH_ENGINES = [
+  {
+    "name": "百度",
+    "url": "https://www.baidu.com/s?wd="
+  },
+  {
+    "name": "谷歌",
+    "url": "https://www.google.com/search?q="
+  },
+  {
+    "name": "必应",
+    "url": "https://cn.bing.com/search?q="
+  },
+  {
+    "name": "360搜索",
+    "url": "https://www.so.com/s?q="
+  },
+  {
+    "name": "搜狗",
+    "url": "https://www.sogou.com/web?query="
+  },
+  {
+    "name": "头条搜索",
+    "url": "https://so.toutiao.com/search/?keyword="
+  },
+  {
+    "name": "淘宝",
+    "url": "https://s.taobao.com/search?q="
+  },
+  {
+    "name": "京东",
+    "url": "https://search.jd.com/Search?keyword="
+  },
+  {
+    "name": "天猫",
+    "url": "https://list.tmall.com/m/search_items.htm?q="
+  },
+  {
+    "name": "1688",
+    "url": "https://s.1688.com/selloffer/offer_search.htm?keywords="
+  },
+  {
+    "name": "知乎",
+    "url": "https://www.zhihu.com/search?type=content&q="
+  },
+  {
+    "name": "简书",
+    "url": "https://www.jianshu.com/search?q="
+  },
+  {
+    "name": "问答库",
+    "url": "https://www.asklib.com/s/?q="
+  },
+  {
+    "name": "V2EX",
+    "url": "https://www.sov2ex.com/?q="
+  },
+  {
+    "name": "微信",
+    "url": "https://weixin.sogou.com/weixin?type=2&query="
+  },
+  {
+    "name": "豆瓣",
+    "url": "https://www.douban.com/search?q="
+  },
+  {
+    "name": "GitHub",
+    "url": "https://github.com/search?q="
+  },
+  {
+    "name": "掘金",
+    "url": "https://juejin.cn/search?query="
+  },
+  {
+    "name": "CSDN",
+    "url": "https://so.csdn.net/so/search?q="
+  },
+  {
+    "name": "语雀",
+    "url": "https://yuque.com/search?q="
+  },
+  {
+    "name": "微博",
+    "url": "https://s.weibo.com/weibo?q="
+  },
+  {
+    "name": "Bilibili",
+    "url": "https://search.bilibili.com/all?keyword="
+  },
+  {
+    "name": "优酷",
+    "url": "https://so.youku.com/search?q="
+  },
+  {
+    "name": "腾讯视频",
+    "url": "https://v.qq.com/search.html?query="
+  },
+  {
+    "name": "爱奇艺",
+    "url": "https://so.iqiyi.com/so/q="
+  }
+];
+    </script>
+    <script>
+  /* 搜索引擎：可切换引擎 + 新标签打开结果（IIFE 隔离作用域，读取上方 window.SEARCH_ENGINES） */
+(function(){
+        /* 搜索引擎列表：复用页面顶部定义的 window.SEARCH_ENGINES（管理页可编辑此块并写回）；缺失时回退到单个默认引擎 */
+      var engines = (window.SEARCH_ENGINES && window.SEARCH_ENGINES.length)
+        ? window.SEARCH_ENGINES
+        : [{ name: '百度', url: 'https://www.baidu.com/s?wd=' }];
+        /* 当前选中的引擎（默认第一个：百度） */
+      var current = engines[0];
+      var btn = document.getElementById('searchEngineBtn');
+      var wrap = document.getElementById('searchEngineWrap');
+      var panel = document.getElementById('searchEnginePanel');
+      var grid = document.getElementById('searchEngineList');
+      var form = document.getElementById('searchForm');
+      var input = document.getElementById('searchInput');
+
+        /* 下拉面板定位：相对右侧内容区 .lp_c 计算 top */
+      function positionPanel() {
+        var content = document.querySelector('.lp_c');
+        var cr = content.getBoundingClientRect();
+        var br = btn.getBoundingClientRect();
+        panel.style.top = (br.bottom - cr.top + 8) + 'px';
+      }
+      var hideTimer = null;
+        /* 显示引擎面板（先重新定位再展开） */
+      function showPanel() {
+        clearTimeout(hideTimer);
+        positionPanel();
+        panel.classList.add('open');
+      }
+        /* 延时 300ms 收起，避免鼠标在间隙移动时误关 */
+      function scheduleHide() {
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(function(){ panel.classList.remove('open'); }, 300);
+      }
+        /* 悬停意图：进入切换区或面板即显示 */
+      wrap.addEventListener('mouseenter', showPanel);
+      wrap.addEventListener('mouseleave', scheduleHide);
+      panel.addEventListener('mouseenter', showPanel);
+      panel.addEventListener('mouseleave', scheduleHide);
+        /* 点击切换按钮：展开/收起面板（阻止冒泡防误关） */
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        if (panel.classList.contains('open')) scheduleHide();
+        else showPanel();
+      });
+        /* 点击面板与切换区以外区域则关闭 */
+      document.addEventListener('click', function(e){
+        if (panel.classList.contains('open') &&
+            !panel.contains(e.target) && !wrap.contains(e.target)) {
+          panel.classList.remove('open');
+        }
+      });
+        /* 页面滚动时，若面板已开则重新定位 */
+      window.addEventListener('scroll', function() {
+        if (panel.classList.contains('open')) positionPanel();
+      }, true);
+
+        /* 动态生成引擎按钮，绑定选中并刷新当前引擎 */
+      engines.forEach(function(en, i){
+        var cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'ei' + (i === 0 ? ' active' : '');
+        cell.textContent = en.name;
+        cell.addEventListener('click', function(){
+          current = engines[i];
+          btn.textContent = en.name;
+          btn.title = '切换搜索引擎：' + en.name;
+          Array.prototype.forEach.call(grid.children, function(c){ c.classList.remove('active'); });
+          cell.classList.add('active');
+          panel.classList.remove('open');
+          input.focus();
+        });
+        grid.appendChild(cell);
+      });
+
+        /* 提交搜索：新标签打开引擎结果页 */
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        var q = input.value.trim();
+        if (!q) { input.focus(); return; }
+          // 新标签打开，避免离开导航页
+        window.open(current.url + encodeURIComponent(q), '_blank');
+        input.value = '';
+      });
+    })();
+    </script>
+      <!-- 返回顶部悬浮按钮 -->
+    <button class="bt" id="backToTop" title="返回顶部" aria-label="返回顶部">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </button>
+    <!-- 导航数据：分类与链接配置，改这里即可增删（位于页面底部） -->
+    <script>
+      /* 导航数据 NAV_DATA：数组内每个对象为一个分类，links 为该分类下的网址；增删分类/链接只需改这里 */
+const NAV_DATA = [
+  {
+    "id": "cat-我的网站",
+    "name": "我的网站",
+    "links": [
+      {
+        "url": "http://localhost/index.html",
+        "title": "公告",
+        "desc": "http://localhost/index.html"
+      }
+    ]
+  },
+  {
+    "id": "cat-recommend",
+    "name": "常用推荐",
+    "links": [
+      {
+        "url": "https://szfilehelper.weixin.qq.com/",
+        "title": "微信文件传输助手",
+        "desc": "微信文件传输助手网页版。"
+      },
+      {
+        "url": "https://www.smzdm.com/",
+        "title": "什么值得买",
+        "desc": "网购就上什么值得买，让您的消费更值！"
+      },
+      {
+        "url": "https://hellogithub.com/",
+        "title": "HelloGitHub开源社区",
+        "desc": "专注于发现和分享有趣、入门级的开源项目。"
+      },
+      {
+        "url": "https://decohack.com/",
+        "title": "独立产品灵感周刊",
+        "desc": "快速查看每日的 Product Hunt 热门榜单，并提供更详细的产品信息。"
+      },
+      {
+        "url": "https://www.juhezy.net/",
+        "title": "聚合资源网",
+        "desc": "聚合资源网是一个在线全自动采集更新全网最新的技术资源教程的网站。"
+      },
+      {
+        "url": "https://www.x6g.com/",
+        "title": "小刀娱乐网",
+        "desc": "专注活动，软件，教程分享！"
+      },
+      {
+        "url": "https://www.52pojie.cn/",
+        "title": "吾爱破解",
+        "desc": "吾爱破解论坛致力于软件安全与病毒分析的前沿。"
+      },
+      {
+        "url": "https://wannengrun.org/zh/",
+        "title": "万能命令",
+        "desc": "快捷寻找和直达你想要的各类工具。"
+      },
+      {
+        "url": "https://www.zhihu.com/",
+        "title": "知乎",
+        "desc": "有问题，上知乎。知乎，可信赖的问答社区，以让每个人高效获得可信赖的解答为使命。"
+      },
+      {
+        "url": "https://hot.432600.xyz/",
+        "title": "今日热榜官网",
+        "desc": "热榜聚合：微信、今日头条、百度、知乎、V2EX、微博、贴吧、Github、抖音等等"
+      },
+      {
+        "url": "http://guozhivip.com/rank/",
+        "title": "果汁排行榜",
+        "desc": "果汁排行榜是一个聚合各种排行榜的一个实用网站。"
+      },
+      {
+        "url": "https://www.anyknew.com/",
+        "title": "AnyKnew",
+        "desc": "AnyKnew 是一个效率资讯 - 高效读新闻, 5分钟遍历全网热点"
+      },
+      {
+        "url": "https://ali.gitcafe.ink/",
+        "title": "小纸条",
+        "desc": "开放纯粹的资源网站"
+      },
+      {
+        "url": "https://picx.xpoet.cn/",
+        "title": "PicX 图床神器",
+        "desc": "基于 GitHub API 开发的具有 CDN 加速功能的图床管理工具。"
+      }
+    ]
+  },
+  {
+    "id": "cat-website",
+    "name": "建站相关",
+    "links": [
+      {
+        "url": "https://ju.cx/",
+        "title": "优惠聚查",
+        "desc": "全网域名注册、续费、转入价格比价注册商优惠查。"
+      },
+      {
+        "url": "https://who.cx/",
+        "title": "Whois 查询",
+        "desc": "追求极致的whois查询"
+      },
+      {
+        "url": "https://www.netlify.com/",
+        "title": "netlify",
+        "desc": "高效能的网站托管平台"
+      },
+      {
+        "url": "https://vercel.com/",
+        "title": "Vercel",
+        "desc": "一个用于静态站点和无服务器函数的云平台"
+      },
+      {
+        "url": "https://www.cloudflare.com/",
+        "title": "cloudflare",
+        "desc": "Cloudflare以向客户提供网站安全管理、性能优化及相关的技术支持为主要业务。"
+      }
+    ]
+  },
+  {
+    "id": "cat-download",
+    "name": "资源下载",
+    "links": [
+      {
+        "url": "https://htsfwb.samr.gov.cn/",
+        "title": "合同示范文本库",
+        "desc": "合同示范文本库收集了市场监管部门制定发布的合同示范文本，供社会公众查阅下载。"
+      },
+      {
+        "url": "https://www.mygraphpaper.com/index.php?lang=zh-hans",
+        "title": "图形方格纸",
+        "desc": "设计自己专用的图形方格纸, 手帐 DIY - PDF"
+      },
+      {
+        "url": "https://danmoshui.com/",
+        "title": "淡墨水字帖",
+        "desc": "在线生成各种田字格字帖、笔顺字帖、拼音字帖、默写字帖、口算字帖、英文字帖"
+      },
+      {
+        "url": "https://www.youhou8.com/",
+        "title": "油猴吧",
+        "desc": "一个给油猴/暴力猴 提供用户脚本的网站"
+      },
+      {
+        "url": "https://www.crxsoso.com/",
+        "title": "Crx搜搜",
+        "desc": "一个牛X的扩展和应用商店"
+      },
+      {
+        "url": "https://chrome.zzzmh.cn/",
+        "title": "极简插件",
+        "desc": "极简插件是一个优质Chrome插件扩展收录下载网站"
+      },
+      {
+        "url": "https://www.crx4chrome.com/",
+        "title": "crx4chrome",
+        "desc": "英文chrome插件下载网"
+      },
+      {
+        "url": "https://www.kuozhanmi.com/",
+        "title": "扩展迷",
+        "desc": "一站式 Chrome 插件下载网站"
+      },
+      {
+        "url": "https://www.qijishow.com/",
+        "title": "奇迹秀",
+        "desc": "奇迹秀是一个公益组织，为设计师提供设计干货及资源"
+      },
+      {
+        "url": "https://www.cupfoxyy.com/",
+        "title": "茶杯狐",
+        "desc": "努力让找电影变得简单"
+      },
+      {
+        "url": "https://msdn.itellyou.cn/",
+        "title": "itellyou",
+        "desc": "MSDN, 我告诉你Windows系统软件镜像下载"
+      },
+      {
+        "url": "https://hellowindows.cn/",
+        "title": "hellowindows",
+        "desc": "精校 完整 极致 Windows系统下载仓储站"
+      },
+      {
+        "url": "https://www.jiumodiary.com/",
+        "title": "鸠摩搜书",
+        "desc": "常用的电子书搜索集合"
+      },
+      {
+        "url": "https://www.xinpianchang.com/",
+        "title": "新片场",
+        "desc": "汇集新片场创作人短片原创作品"
+      },
+      {
+        "url": "https://www.kisssub.org/",
+        "title": "爱恋动漫下载",
+        "desc": "各种动漫资源"
+      },
+      {
+        "url": "https://www.pearvideo.com/",
+        "title": "梨视频",
+        "desc": "资讯短视频"
+      },
+      {
+        "url": "https://photo.ihansen.org/",
+        "title": "美图集",
+        "desc": "海量高清图片和桌面壁纸，高质量图片免费下载"
+      },
+      {
+        "url": "https://www.aigei.com/",
+        "title": "爱给网",
+        "desc": "中国最大的数字娱乐免费素材下载网站"
+      },
+      {
+        "url": "http://fflp.ysepan.com/",
+        "title": "非凡工作室",
+        "desc": "乱七八糟的个人网站"
+      }
+    ]
+  },
+  {
+    "id": "cat-tools",
+    "name": "实用工具",
+    "links": [
+      {
+        "url": "http://chacuo.net/",
+        "title": "查错IT网",
+        "desc": "一个网站，搞定所有你想要的工具"
+      },
+      {
+        "url": "https://tool.browser.qq.com/",
+        "title": "帮小忙",
+        "desc": "腾讯QQ浏览器在线工具箱平台"
+      },
+      {
+        "url": "https://bangong.360.cn/",
+        "title": "苏打办公",
+        "desc": "苏打办公，工具就是全。"
+      },
+      {
+        "url": "https://www.30aitool.com/",
+        "title": "30tool",
+        "desc": "可能是最好的工具网"
+      },
+      {
+        "url": "https://www.67tool.com/",
+        "title": "即时工具",
+        "desc": "即时工具-致力打造即用即走型在线工具箱"
+      },
+      {
+        "url": "https://tool.lu/",
+        "title": "在线工具",
+        "desc": "在线工具,开发人员工具,代码格式化、压缩、加密、解密,下载链接转换"
+      },
+      {
+        "url": "https://www.toolfk.com/",
+        "title": "TOOLFK在线工具人",
+        "desc": "TOOLFK立志做一个对他人有用的在线工具站"
+      },
+      {
+        "url": "https://www.iamwawa.cn/",
+        "title": "蛙蛙工具",
+        "desc": "蛙蛙工具是一个包含大量在线工具的网站"
+      },
+      {
+        "url": "https://www.gaituya.com",
+        "title": "改图鸭",
+        "desc": "在线图片压缩、图片编辑、图片格式转换工具"
+      },
+      {
+        "url": "https://favicon.im/",
+        "title": "在线获取favicon",
+        "desc": "立即获取并显示任何网站的favicon"
+      },
+      {
+        "url": "https://yesicon.app/",
+        "title": "Yesicon矢量图标库",
+        "desc": "精选全球高品质、开源、免费的矢量图标库"
+      },
+      {
+        "url": "https://www.hisprice.cn/",
+        "title": "商品历史价格查询",
+        "desc": "商品历史价格查询工具让您轻松掌握商品的历史价格趋势"
+      },
+      {
+        "url": "https://tool.manmanbuy.com/HistoryLowest.aspx",
+        "title": "慢慢买历史比价",
+        "desc": "查商品历史价格走势"
+      },
+      {
+        "url": "https://www.maoken.com/",
+        "title": "猫啃网",
+        "desc": "免费字体下载,免费商用字体,免版权字体,无版权的字体"
+      },
+      {
+        "url": "https://www.virscan.org/",
+        "title": "在线查毒",
+        "desc": "virscan多引擎查毒"
+      },
+      {
+        "url": "https://n.shellpub.com/",
+        "title": "shellpub",
+        "desc": "在线的脚本安全检查网站"
+      },
+      {
+        "url": "http://weibodang.cn/",
+        "title": "微博党",
+        "desc": "各种在线视频下载网站,相当好用"
+      },
+      {
+        "url": "https://cowtransfer.com/",
+        "title": "奶牛快传",
+        "desc": "国内一个好用的临时传输网盘,支持手机和二维码"
+      },
+      {
+        "url": "https://www.google.cn/maps/",
+        "title": "谷歌地图",
+        "desc": "好用流畅的地图,还有值得体验的谷歌街景"
+      },
+      {
+        "url": "https://translate.google.cn/",
+        "title": "谷歌翻译",
+        "desc": "不错的翻译能力"
+      },
+      {
+        "url": "https://squoosh.app/",
+        "title": "谷歌squoosh",
+        "desc": "谷歌Chrome实验室在线压缩图片网站"
+      },
+      {
+        "url": "https://tinypng.com/",
+        "title": "Tinypng",
+        "desc": "智能 WebP、PNG 和 JPEG 压缩网站"
+      },
+      {
+        "url": "https://cn.office-converter.com/",
+        "title": "免费在线文件转换器",
+        "desc": "免费在线转换视频,音频,图形,文档,压缩格式"
+      },
+      {
+        "url": "https://www.alltoall.net/",
+        "title": "alltoall",
+        "desc": "凹凸凹是一个在线格式转换网站"
+      },
+      {
+        "url": "https://www.ilovepdf.com/zh-cn",
+        "title": "ilovepdf",
+        "desc": "PDF文件在线操作"
+      },
+      {
+        "url": "https://www.remove.bg/",
+        "title": "remove.bg",
+        "desc": "全智能自动在线抠图网站"
+      },
+      {
+        "url": "https://editor.polaxiong.com/",
+        "title": "泼辣修图",
+        "desc": "好用在线网页修图"
+      },
+      {
+        "url": "https://web.baimiaoapp.com/",
+        "title": "白描网页版",
+        "desc": "图片文字提取（OCR）"
+      },
+      {
+        "url": "https://www.ip138.com/",
+        "title": "IP查询",
+        "desc": "IP查询与IP列表"
+      },
+      {
+        "url": "https://pasteme.cn/",
+        "title": "可私有文本分享平台",
+        "desc": "PasteMe 是一个无需注册的文本分享平台"
+      },
+      {
+        "url": "https://txtpad.cn/",
+        "title": "文本派",
+        "desc": "极简在线文本存储"
+      },
+      {
+        "url": "https://www.jq22.com/textDifference",
+        "title": "在线文本比较工具",
+        "desc": "替代PC端的beyond compare"
+      },
+      {
+        "url": "https://netcut.cn/",
+        "title": "网络剪贴板",
+        "desc": "极简的跨平台数据暂存和传送工具"
+      },
+      {
+        "url": "https://carbon.now.sh/",
+        "title": "代码生成图片",
+        "desc": "代码排版美化生成图片在线工具"
+      },
+      {
+        "url": "https://www.canva.cn/",
+        "title": "canva",
+        "desc": "真免费网上平面设计工具"
+      },
+      {
+        "url": "https://zenvideo.qq.com/",
+        "title": "智影",
+        "desc": "智影是一款云端智能视频创作工具"
+      },
+      {
+        "url": "https://alternativeto.net/",
+        "title": "alternativeto",
+        "desc": "以推荐相似软件出名，支持按照平台来搜索，Windows, Mac, Linux 和Web 等平台都可以。"
+      }
+    ]
+  },
+  {
+    "id": "cat-software",
+    "name": "分享软件",
+    "links": [
+      {
+        "url": "https://www.ypojie.com/",
+        "title": "亿破姐",
+        "desc": "亿破姐官方网站精选互联网优秀软件分享"
+      },
+      {
+        "url": "https://www.ghxi.com/",
+        "title": "果核剥壳",
+        "desc": "果核剥壳是一家综合科技站点，看新闻，分享破解软件、绿色软件，Windows系统。"
+      },
+      {
+        "url": "http://www.th-sjy.com/",
+        "title": "th_sjy",
+        "desc": "专注软件汉化"
+      },
+      {
+        "url": "https://www.yeyulingfeng.com/",
+        "title": "夜雨聆风",
+        "desc": "专注于互联网资源分享，乐于分享，好资源不私藏！"
+      },
+      {
+        "url": "https://www.appinn.com/",
+        "title": "小众软件",
+        "desc": "软件分享和介绍"
+      },
+      {
+        "url": "http://www.dayanzai.me/",
+        "title": "大眼仔旭",
+        "desc": "软件集散地"
+      },
+      {
+        "url": "https://www.423down.com/",
+        "title": "ZD423",
+        "desc": "知名软件达人"
+      },
+      {
+        "url": "https://foxirj.com/",
+        "title": "佛系软件",
+        "desc": "精品Windows,macOS破解软件下载"
+      },
+      {
+        "url": "https://www.5ilr.com",
+        "title": "5ilr绿软",
+        "desc": "靠谱软件下载网"
+      },
+      {
+        "url": "https://www.ligonggong.com/",
+        "title": "软件库",
+        "desc": "本站免费推荐好用实用的软件及资源"
+      },
+      {
+        "url": "https://www.wrfou.com/",
+        "title": "挖软否-挖掘软件的乐趣",
+        "desc": "网站致力于Windows、Mac、Android相关知识解答和精品软件分享"
+      }
+    ]
+  },
+  {
+    "id": "cat-study",
+    "name": "知识学习",
+    "links": [
+      {
+        "url": "https://docs.qq.com/sheet/DRU5MWHZCTHFGQnhM?tab=qb1sze&amp;_t=1666091448128&amp;ADUIN=77158095&amp;ADSESSION=1666078764&amp;ADTAG=CLIENT.QQ.5923_.0&amp;ADPUBNO=27245&amp;u=bf6d41dbccd440fe8c627d5846790a7c",
+        "title": "全网优质课程知识库",
+        "desc": "全网最全公开课知识库"
+      },
+      {
+        "url": "http://oeasy.org/",
+        "title": "oeasy教程网",
+        "desc": "各种大量免费的教程"
+      },
+      {
+        "url": "https://www.lanqiao.cn/courses/?fee=free",
+        "title": "蓝桥云课",
+        "desc": "蓝桥云课是国内领先的IT在线编程及在线实训学习平台"
+      },
+      {
+        "url": "https://www.yxgapp.com/",
+        "title": "译学馆",
+        "desc": "优质的外国同步翻译综合视频学习网站"
+      },
+      {
+        "url": "https://open.163.com/ted/",
+        "title": "TED",
+        "desc": "接触各式思想大咖"
+      },
+      {
+        "url": "http://www.a-hospital.com/",
+        "title": "A+医学百科",
+        "desc": "开放的在线医学百科,获取和分享医学保健知识"
+      },
+      {
+        "url": "https://zh.wikihow.com/",
+        "title": "wikihow中文版",
+        "desc": "互联网上最值得信赖的指南网站，类似于百度经验的国外站"
+      },
+      {
+        "url": "https://www.w3school.com.cn",
+        "title": "w3school",
+        "desc": "领先的免费 Web 技术教程，在 w3school，你可以找到你所需要的所有的网站建设教程"
+      },
+      {
+        "url": "https://www.runoob.com/",
+        "title": "菜鸟教程",
+        "desc": "学的不仅是技术，更是梦想！该站提供了很全的编程技术基础教程，适合入门学习"
+      },
+      {
+        "url": "http://www.hubwiz.com/",
+        "title": "汇智网",
+        "desc": "汇智网是一个学习最前沿编程技术的平台，提供了node.js、js、jq等相关的课程"
+      },
+      {
+        "url": "https://www.w3cways.com/",
+        "title": "W3Cways",
+        "desc": "Web前端学习之路，网站提供很丰富的相关技术中文文档"
+      },
+      {
+        "url": "https://www.html.cn/",
+        "title": "WEB前端开发",
+        "desc": "一个前端开发技术和前端开发资讯的专业博客，专注前端开发，关注用户体验"
+      },
+      {
+        "url": "https://developer.mozilla.org/zh-CN/docs/Learn",
+        "title": "Mozilla 开发者网络",
+        "desc": "一个完整的学习平台，你可以在这里深入学习网络技术以及能够驱动网络的软件"
+      },
+      {
+        "url": "http://www.banshujiang.cn/",
+        "title": "搬书匠",
+        "desc": "免费编程相关的书籍"
+      }
+    ]
+  },
+  {
+    "id": "cat-information",
+    "name": "资讯博客",
+    "links": [
+      {
+        "url": "https://www.williamlong.info/",
+        "title": "月光博客",
+        "desc": "老牌互联网和科技博客"
+      },
+      {
+        "url": "https://www.solidot.org/",
+        "title": "奇客Solidot",
+        "desc": "奇客的资讯，重要的东西"
+      },
+      {
+        "url": "https://www.huxiu.com/",
+        "title": "虎嗅网",
+        "desc": "聚合资讯新媒体平台"
+      },
+      {
+        "url": "https://www.qdaily.com/",
+        "title": "好奇心日报",
+        "desc": "好奇驱动你的世界"
+      },
+      {
+        "url": "https://www.tmtpost.com/",
+        "title": "钛媒体",
+        "desc": "引领未来商业与生活新知"
+      },
+      {
+        "url": "https://36kr.com/",
+        "title": "36氪",
+        "desc": "让一部分人先看到未来"
+      },
+      {
+        "url": "https://www.ifanr.com/",
+        "title": "爱范儿",
+        "desc": "让未来触手可及"
+      }
+    ]
+  },
+  {
+    "id": "cat-books",
+    "name": "网络书籍",
+    "links": [
+      {
+        "url": "https://1lib.ink/",
+        "title": "Library Genesis",
+        "desc": "免费学术资源数据库 中文、外文数据库，期刊、电子书、学位论文、会议资料…你要的统统有"
+      },
+      {
+        "url": "https://zh.sa1lib.org/",
+        "title": "数字图书馆",
+        "desc": "数字图书馆。搜索书籍。免费下载书籍"
+      },
+      {
+        "url": "http://www.zxcs.me/",
+        "title": "知轩藏书",
+        "desc": "全本电子书下载"
+      },
+      {
+        "url": "https://www.kgbook.com/",
+        "title": "苦瓜书盘",
+        "desc": "绿色清新的电子书籍下载站"
+      },
+      {
+        "url": "https://bbs.gxsd.com.cn/forum.php",
+        "title": "国学数典论坛",
+        "desc": "古籍资料和下载"
+      },
+      {
+        "url": "https://www.pdfbook.cn/",
+        "title": "云海电子图书馆",
+        "desc": "网上电子书籍集合,但跳转广告不少,建议开启屏蔽广告插件"
+      },
+      {
+        "url": "https://manybooks.net/",
+        "title": "manybooks",
+        "desc": "外国电子书资源,文学类偏多"
+      }
+    ]
+  },
+  {
+    "id": "cat-navigation",
+    "name": "网址导航",
+    "links": [
+      {
+        "url": "https://www.code-nav.cn/",
+        "title": "编程导航",
+        "desc": "一站式编程资源搜索,发现优质编程学习资源,提高编程学习效率"
+      },
+      {
+        "url": "https://www.ooopn.com/",
+        "title": "小白导航",
+        "desc": "Google搜索镜像，Google学术镜像，Library Genesis镜像，Z-Library镜像"
+      },
+      {
+        "url": "https://morething.top/",
+        "title": "有点儿东西",
+        "desc": "致力于发现更多美好实用的网站资源，影视、软件、网盘、编程搜索和技术分享。"
+      },
+      {
+        "url": "https://site.sciping.com/",
+        "title": "科塔学术导航",
+        "desc": "科塔学术导航是一个质量非常高的学术导航网站，强烈推荐收藏。"
+      },
+      {
+        "url": "https://search.chongbuluo.com/",
+        "title": "快搜",
+        "desc": "虫部落快搜,聚合搜索引擎,搜索快人一步"
+      },
+      {
+        "url": "https://webjike.com/",
+        "title": "小呆导航",
+        "desc": "可自定义的简洁网址导航"
+      },
+      {
+        "url": "https://www.egouz.com/",
+        "title": "国外网站推荐",
+        "desc": "自己探索下淘出喜欢的网站"
+      },
+      {
+        "url": "https://chuangzaoshi.com/",
+        "title": "创造狮导航",
+        "desc": "面向前端创造者的导航"
+      },
+      {
+        "url": "https://hao.shejidaren.com/",
+        "title": "设计导航",
+        "desc": "精选最好的设计网站大全"
+      },
+      {
+        "url": "https://webfullstack.me/",
+        "title": "Web全栈开发网址导航",
+        "desc": "了解最新全栈开发信息，了解全栈技能尽在Web全栈开发网址导航"
+      },
+      {
+        "url": "http://lxqnsys.com/d/#/index",
+        "title": "五花八门导航",
+        "desc": "一个简洁的高度自定义导航网站"
+      },
+      {
+        "url": "https://creativemass.cn/",
+        "title": "CreativeMass创意导航",
+        "desc": "精选创意导航"
+      },
+      {
+        "url": "https://hao.5iux.cn/",
+        "title": "5IUX设计师导航",
+        "desc": "设计综合导航"
+      },
+      {
+        "url": "https://www.soukuzhan.com/",
+        "title": "搜酷站",
+        "desc": "专注于搜罗全网酷站"
+      },
+      {
+        "url": "https://www.zhansousou.com/",
+        "title": "站搜搜",
+        "desc": "寻找，收藏，分享网站"
+      },
+      {
+        "url": "http://www.dajiadaohang.com/",
+        "title": "打假导航",
+        "desc": "打假人,执法者,进货人,消费者专用查询的网址导航站点"
+      }
+    ]
+  },
+  {
+    "id": "cat-course",
+    "name": "视频教程",
+    "links": [
+      {
+        "url": "https://www.imooc.com/",
+        "title": "慕课网",
+        "desc": "程序员的梦工厂，慕课网是垂直的互联网IT技能免费学习网站"
+      },
+      {
+        "url": "https://www.jikexueyuan.com/",
+        "title": "极客学院",
+        "desc": "一家很不错的IT职业在线教育平台，入门教程视频通俗易懂，很适合新手学习"
+      },
+      {
+        "url": "https://www.zhaikexueyuan.com/",
+        "title": "宅客学院",
+        "desc": "IT职业教育线上品牌，课程涵盖大数据、前端开发、后端开发等，免费课程挺多的"
+      },
+      {
+        "url": "https://xiedaimala.com/",
+        "title": "写代码啦",
+        "desc": "一家收费的前端开发线上培训机构，虽然课程收费，但是官网还是有挺多免费教程视频的"
+      },
+      {
+        "url": "https://study.163.com/category/it",
+        "title": "网易云课程 - 编程开发",
+        "desc": "网易旗下实用技能学习平台，内容非常丰富，免费教程也挺多的"
+      },
+      {
+        "url": "https://ke.qq.com/course/list?mt=1001",
+        "title": "腾讯课程 - IT互联网",
+        "desc": "腾讯推出的专业在线教育平台，采用直播教学方式，适合有充裕时间学习的同学"
+      },
+      {
+        "url": "https://qkmp4.cn/",
+        "title": "趣看视界",
+        "desc": "免VIP看电影-全网资源实时更新，你想看的这里全都有"
+      },
+      {
+        "url": "https://www.mvyxws.com/",
+        "title": "医学微视",
+        "desc": "医学微视是一个以视频的方式分享各种医学知识的良心网站，强烈安利。"
+      }
+    ]
+  },
+  {
+    "id": "cat-games",
+    "name": "在线游戏",
+    "links": [
+      {
+        "url": "games/index.html",
+        "title": "在线小游戏平台",
+        "desc": "80+小游戏在线玩耍"
+      },
+      {
+        "url": "https://www.yikm.net/",
+        "title": "FC游戏在线玩",
+        "desc": "魂斗罗，超级玛丽，热血足球，三国志，合金弹头，拳皇。"
+      },
+      {
+        "url": "https://poki.cn/",
+        "title": "免费在线游戏",
+        "desc": "玩最好玩的免费游戏 就在 Poki。"
+      },
+      {
+        "url": "https://lines.frvr.com/",
+        "title": "在线连连看",
+        "desc": "一个在线连连看小游戏，打开就能玩"
+      },
+      {
+        "url": "https://slither.io/",
+        "title": "在线贪吃蛇",
+        "desc": "这是一个可以在线玩贪吃蛇的网站"
+      },
+      {
+        "url": "https://liferestart.syaro.io/public/index.html",
+        "title": "人生重开模拟器",
+        "desc": "一个文字冒险类的小游戏"
+      },
+      {
+        "url": "https://weavesilk.com/",
+        "title": "光线绘画网站",
+        "desc": "一个很好玩的光线绘画网站，不需要任何绘画基础"
+      },
+      {
+        "url": "https://www.mazegenerator.net/",
+        "title": "在线迷宫生成器",
+        "desc": "一个在线迷宫生成器，你自己可以选择迷宫的形状"
+      },
+      {
+        "url": "https://emojisandearthporn.com/",
+        "title": "寻找不动的emoji",
+        "desc": "一个挑战眼力的游戏，在这些动的表情中找到那个不动的。"
+      },
+      {
+        "url": "https://nazo.one-story.cn/",
+        "title": "一个很烧脑的小游戏",
+        "desc": "输入正确的答案才能进去下一关"
+      },
+      {
+        "url": "https://dos.zczc.cz/",
+        "title": "在线 DOS 游戏",
+        "desc": "在浏览器中在线游玩 DOS 游戏！"
+      },
+      {
+        "url": "https://taiko.bui.pm/",
+        "title": "太鼓达人",
+        "desc": "在网页里玩的太鼓达人，视觉效果做得非常棒，歌曲也多，戴上耳机，玩一把吧。"
+      },
+      {
+        "url": "weisuoyuwei/index.html",
+        "title": "为所欲为生成器",
+        "desc": "咳咳，别想歪了，人家是一个正经网站，不管不输入什么字，最后都会回到为所欲为。"
+      },
+      {
+        "url": "hacker.html",
+        "title": "黑客网页",
+        "desc": "这是制作的用来装 X 装得很高科技的网页，只是模拟出一个酷酷的代码界面"
+      },
+      {
+        "url": "https://win11.blueedge.me/",
+        "title": "Windows11网页版",
+        "desc": "使用React，CSS（SCSS）和JS等标准Web技术在Web上复制Windows 11桌面体验"
+      },
+      {
+        "url": "https://tjy-gitnub.github.io/win12/desktop.html",
+        "title": "Windows12网页版",
+        "desc": "在线体验Windows12网页版"
+      }
+    ]
+  },
+  {
+    "id": "cat-welfare",
+    "name": "福利资源",
+    "links": [
+      {
+        "url": "https://github.com/pgfldh/-X-",
+        "title": "小X福利导航",
+        "desc": "小X福利导航最新地址，小X福利导航地址发布页"
+      },
+      {
+        "url": "https://www.grnew.xyz/",
+        "title": "小说网",
+        "desc": "H小说网|同人小说,asmr收集全网音声助眠网站，无人声、寝息、免费资源、同人音声"
+      },
+      {
+        "url": "https://qscxx.top/",
+        "title": "岛国资源站",
+        "desc": "岛国资源站,h漫画,高肉小说,抖手漫画最新地址发布"
+      },
+      {
+        "url": "https://www.13535.xyz/",
+        "title": "135ckk",
+        "desc": "135ckk视频地址发布页"
+      },
+      {
+        "url": "https://github.com/yuhuage/dizhi/",
+        "title": "雨花阁",
+        "desc": "雨花阁BT搜索地址发布页"
+      },
+      {
+        "url": "https://github.com/fwonggh/Bthub",
+        "title": "BTHub磁力搜索",
+        "desc": "BTHub磁力搜索，电影、电视剧、动漫、电子书、游戏、车牌号"
+      },
+      {
+        "url": "https://www.mimiyanjiushe.cc/",
+        "title": "秘密研究社",
+        "desc": "秘密研究社是一个致力于探索各种未知领域的神秘组织。"
+      },
+      {
+        "url": "https://www.lanzoub.com/b0ev67kih",
+        "title": "风声破解软件合集",
+        "desc": "男人快乐的源泉，打开F12，点击左上角切换设备仿真，F5刷新网页有惊喜哦"
+      },
+      {
+        "url": "https://jsdig.com/",
+        "title": "成人小说",
+        "desc": "围绕小说书库、章节阅读、都市题材和热门书单建立分类导航，覆盖短篇、长篇、连载和完结内容。"
+      }
+    ]
+  }
+];
+    </script>
+  </body>
+</html>

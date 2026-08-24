@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>导航数据管理</title>
+  <style>
+    /* ============ 主题变量（与 index.html 共用，保持一致观感） ============ */
+    :root {
+      --main: var(--theme);
+      --shadow-blackdeep: 0 2px 16px -3px rgba(0, 0, 0, .15);
+    }
+    :root {
+      --theme: #425AEF;            /* 主题主色 */
+      --fontcolor: #363636;        /* 主文字颜色 */
+      --background: #fdfdfe;       /* 页面背景色 */
+      --secondtext: rgba(60, 60, 67, 0.8);
+      --card-bg: #fff;             /* 卡片背景 */
+      --card-border: #e3e8f7;      /* 边框颜色 */
+    }
+    :root[data-theme="dark"] {
+      --fontcolor: #e8e8ed;
+      --background: #0e0e10;
+      --card-bg: #1a1a1f;
+      --secondtext: rgba(200, 200, 210, 0.8);
+      --card-border: #2c2c34;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root[data-theme="auto"] {
+        --fontcolor: #e8e8ed;
+        --background: #0e0e10;
+        --card-bg: #1a1a1f;
+        --secondtext: rgba(200, 200, 210, 0.8);
+        --card-border: #2c2c34;
+      }
+    }
+    /* ============ 管理页布局 ============ */
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+           background: var(--background); color: var(--fontcolor); line-height: 1.5; }
+    .ad_top { display: flex; align-items: center; gap: 12px; height: 56px; box-sizing: border-box; padding: 0 20px;
+              border-bottom: 1px solid var(--card-border); background: var(--card-bg);
+              position: sticky; top: 0; z-index: 10; }
+    .ad_title { font-size: 17px; font-weight: 700; }
+    .ad_sub { font-size: 13px; color: var(--secondtext); }
+    .ad_actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .ad_link { color: var(--theme); text-decoration: none; font-size: 13px;
+               border: 1px solid var(--card-border); padding: 6px 10px; border-radius: 8px; }
+    .nv_mini { height: 28px; padding: 0 10px; border: 1px solid var(--card-border); border-radius: 8px;
+               background: var(--card-bg); color: var(--fontcolor); font-size: 12px; cursor: pointer; }
+    .nv_mini:hover { border-color: var(--main); color: var(--main); }
+    .nv_mini:disabled { opacity: .35; cursor: not-allowed; border-color: var(--card-border); color: var(--secondtext); }
+    /* 管理页整体：顶栏 + 左右两栏应用式布局 */
+    .ad_main { max-width: 1200px; margin: 0 auto; padding: 0; height: calc(100vh - 56px); display: flex; overflow: hidden; }
+    .ad_side { width: 320px; flex-shrink: 0; border-right: 1px solid var(--card-border);
+               padding: 16px; overflow-y: auto; background: var(--card-bg); }
+    .ad_content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .ad_content_head { padding: 16px 16px 10px; border-bottom: 1px solid var(--card-border); }
+    .ad_content_head h3 { margin: 0 0 6px; font-size: 15px; }
+    .ad_sec { border: 1px solid var(--card-border); border-radius: 12px; background: var(--card-bg);
+              padding: 14px; margin-bottom: 14px; }
+    .ad_sec h3 { margin: 0 0 12px; font-size: 14px; }
+    .nv_row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .nv_row label { width: 92px; flex-shrink: 0; font-size: 13px; color: var(--secondtext); }
+    .nv_row input, .nv_row select { flex: 1; min-width: 0; height: 36px; padding: 0 10px;
+              border: 1px solid var(--card-border); border-radius: 8px;
+              background: var(--background); color: var(--fontcolor); font-size: 13px; }
+    .nv_row input:focus, .nv_row select:focus { outline: none; border-color: var(--main); }
+    .nv_btn { height: 36px; padding: 0 14px; border: 1px solid var(--main); border-radius: 10px;
+              background: var(--main); color: #fff; font-size: 13px; cursor: pointer; position: relative; }
+    .nv_btn:hover { opacity: .9; }
+    .nv_btn.nv_dirty::after { content: ''; position: absolute; top: -4px; right: -4px;
+              width: 9px; height: 9px; border-radius: 50%; background: #e15a5a; box-shadow: 0 0 0 2px var(--card-bg); }
+    .nv_hint { font-size: 12px; color: var(--secondtext); margin: 8px 0 0; line-height: 1.5; }
+    /* 标签页：分类链接 / 搜索引擎 切换 */
+    .ad_tabs { display: flex; gap: 8px; margin-bottom: 8px; }
+    .ad_tab { height: 32px; padding: 0 14px; border: 1px solid var(--card-border); border-radius: 9px;
+              background: var(--background); color: var(--fontcolor); font-size: 13px; cursor: pointer; }
+    .ad_tab:hover { border-color: var(--main); color: var(--main); }
+    .ad_tab.active { background: var(--main); color: #fff; border-color: var(--main); }
+    /* 搜索引擎标签下隐藏展开/收起（仅分类列表用），搜索框占满 */
+    .ad_content[data-tab="se"] .nv_tool_btn { display: none; }
+    .ad_content[data-tab="se"] .nv_search { flex: 1; }
+    code { background: rgba(127, 127, 127, .15); padding: 1px 5px; border-radius: 5px; font-size: 11px; }
+    /* 工具条：搜索 + 展开/收起 */
+    .nv_toolbar { display: flex; gap: 8px; margin-top: 10px; }
+    .nv_search { flex: 1; min-width: 0; height: 34px; padding: 0 12px;
+                 border: 1px solid var(--card-border); border-radius: 9px;
+                 background: var(--background); color: var(--fontcolor); font-size: 13px; }
+    .nv_search:focus { outline: none; border-color: var(--main); }
+    .nv_tool_btn { height: 34px; padding: 0 12px; border: 1px solid var(--card-border);
+                 border-radius: 9px; background: var(--card-bg); color: var(--fontcolor);
+                 font-size: 12px; cursor: pointer; flex-shrink: 0; }
+    .nv_tool_btn:hover { border-color: var(--main); color: var(--main); }
+    /* 管理已有：分类/链接列表（大区域，内部滚动） */
+    .nv_manage { flex: 1; overflow-y: auto; padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+    /* 未选文件时的提示条 */
+    .nv_filebar { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--card-border); background: var(--background); }
+    .nv_file_msg { font-size: 13px; color: var(--secondtext); flex: 1; min-width: 0; }
+    .nv_cat { border: 1px solid var(--card-border); border-radius: 10px; padding: 10px 12px;
+              background: var(--background); }
+    .nv_cat_head { display: flex; align-items: center; gap: 8px; }
+    .nv_cat_toggle { width: 22px; height: 22px; flex-shrink: 0; border: none; background: none;
+                     color: var(--secondtext); cursor: pointer; font-size: 11px; padding: 0; }
+    .nv_cat_name { flex: 1; min-width: 0; font-weight: 600; font-size: 14px;
+                   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nv_cat_meta { font-size: 11px; color: var(--secondtext); flex-shrink: 0; margin-right: 4px; }
+    .nv_cat_acts, .nv_link_acts { display: flex; gap: 6px; flex-shrink: 0; }
+    .nv_mini[data-act^="move-"] { padding: 0 7px; min-width: 26px; }
+    .nv_cat.nv_collapsed .nv_links { display: none; }
+    .nv_links { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .nv_link_row { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+                   padding: 7px 10px; border-radius: 8px; background: var(--card-bg);
+                   border: 1px solid var(--card-border); }
+    .nv_link_row.nv_editing { align-items: flex-start; flex-wrap: wrap; }
+    .nv_link_main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .nv_link_title { font-size: 13px; font-weight: 600; color: var(--fontcolor);
+                     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nv_link_url { font-size: 11px; color: var(--secondtext);
+                   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nv_link_desc { font-size: 11px; color: var(--secondtext); opacity: .85;
+                    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nv_mini.nv_danger { border-color: #e15a5a; color: #e15a5a; }
+    .nv_mini.nv_danger:hover { background: #e15a5a; color: #fff; }
+    .nv_edit_input { height: 32px; padding: 0 10px; width: 100%; box-sizing: border-box;
+                     border: 1px solid var(--main); border-radius: 8px;
+                     background: var(--background); color: var(--fontcolor); font-size: 13px; }
+    .nv_edit_fields { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .nv_empty { font-size: 12px; color: var(--secondtext); padding: 6px 2px; }
+    /* 底部保存条（始终可见） */
+    .ad_savebar { display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+                  border-top: 1px solid var(--card-border); background: var(--card-bg); }
+    .ad_savebar .nv_hint { margin: 0; flex: 1; min-width: 0; }
+    .ad_save_acts { display: flex; gap: 8px; flex-shrink: 0; }
+    /* 窄屏：单列、页面滚动 */
+    @media (max-width: 860px) {
+      .ad_main { height: auto; flex-direction: column; overflow: visible; }
+      .ad_side { width: auto; border-right: none; border-bottom: 1px solid var(--card-border); overflow: visible; }
+      .nv_manage { flex: none; max-height: 64vh; }
+    }
+    /* 登录视图 */
+    .hidden { display: none !important; }
+    .login_wrap { max-width: 360px; margin: 14vh auto 0; padding: 0 16px; }
+    .login_card { border: 1px solid var(--card-border); border-radius: 14px; background: var(--card-bg);
+                  padding: 24px; box-shadow: var(--shadow-blackdeep); }
+    .login_card h2 { margin: 0 0 4px; font-size: 18px; }
+    .login_card p.sub { margin: 0 0 18px; font-size: 12px; color: var(--secondtext); }
+    .login_row { margin-bottom: 12px; }
+    .login_row label { display: block; font-size: 13px; color: var(--secondtext); margin-bottom: 6px; }
+    .login_row input { width: 100%; height: 38px; padding: 0 12px;
+                       border: 1px solid var(--card-border); border-radius: 9px;
+                       background: var(--background); color: var(--fontcolor); font-size: 14px; }
+    .login_row input:focus { outline: none; border-color: var(--main); }
+    .login_btn { width: 100%; height: 40px; border: none; border-radius: 10px;
+                 background: var(--main); color: #fff; font-size: 14px; cursor: pointer; }
+    .login_btn:hover { opacity: .9; }
+    .login_err { color: #e15a5a; font-size: 12px; min-height: 16px; margin: 8px 0 0; }
+    /* 修改密码模态框 */
+    .pw_modal { position: fixed; inset: 0; background: rgba(0, 0, 0, .45);
+                display: flex; align-items: center; justify-content: center; z-index: 50; }
+    .pw_card { width: 340px; max-width: 92vw; border: 1px solid var(--card-border);
+               border-radius: 14px; background: var(--card-bg); padding: 22px; box-shadow: var(--shadow-blackdeep); }
+    .pw_card h3 { margin: 0 0 14px; font-size: 16px; }
+    .pw_row { margin-bottom: 10px; }
+    .pw_row label { display: block; font-size: 12px; color: var(--secondtext); margin-bottom: 5px; }
+    .pw_row input { width: 100%; height: 36px; padding: 0 10px; box-sizing: border-box;
+                    border: 1px solid var(--card-border); border-radius: 8px;
+                    background: var(--background); color: var(--fontcolor); font-size: 13px; }
+    .pw_row input:focus { outline: none; border-color: var(--main); }
+    .pw_btns { display: flex; gap: 8px; margin-top: 4px; }
+    .pw_btns .nv_mini { flex: 1; }
+    .pw_btns .nv_btn { flex: 1; }
+    .pw_err { color: #e15a5a; font-size: 12px; min-height: 15px; margin: 8px 0 0; }
+  </style>
+  <script>
+    /* 首屏前同步应用主题，避免深色模式闪烁（与 index.html 共用 localStorage 键 themePref） */
+    (function () {
+      try {
+        var m = localStorage.getItem('themePref');
+        if (m !== 'light' && m !== 'dark' && m !== 'auto') m = 'auto';
+        var dark = (m === 'dark') || (m === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <!-- 登录视图：未登录时显示 -->
+  <div class="login_wrap" id="loginView">
+    <div class="login_card">
+      <h2>管理后台登录</h2>
+      <p class="sub">登录后才能修改导航数据（本页直连 index.html，无需启动服务，需 Chrome / Edge；默认密码 admin，请尽快修改）</p>
+      <div class="login_row">
+        <label for="loginPass">管理密码</label>
+        <input type="password" id="loginPass" autocomplete="current-password" placeholder="请输入密码" />
+      </div>
+      <button type="button" id="loginBtn" class="login_btn">登录</button>
+      <div class="login_err" id="loginErr"></div>
+    </div>
+  </div>
+
+  <!-- 管理视图：登录后显示（默认隐藏） -->
+  <div id="adminView" class="hidden">
+    <!-- 管理页顶栏：标题、数据计数、打开前台、主题切换、退出登录 -->
+    <header class="ad_top">
+      <div class="ad_title">导航数据管理</div>
+      <div class="ad_sub">共 <span id="adCount">0</span> 个分类 · <span id="adSubLinks">0</span> 条链接 · <span id="adSubSe">0</span> 个搜索引擎</div>
+      <div class="ad_actions">
+        <a class="ad_link" href="./index.html" target="_blank">打开前台页面</a>
+        <button type="button" id="adTheme" class="nv_mini" title="切换主题（亮/暗/跟随系统）">主题</button>
+        <button type="button" id="adPw" class="nv_mini">修改密码</button>
+        <button type="button" id="adLogout" class="nv_mini">退出登录</button>
+      </div>
+    </header>
+
+    <main class="ad_main">
+      <!-- 左侧：添加分类 / 添加链接（窄屏时移至上方） -->
+      <aside class="ad_side">
+        <section class="ad_sec">
+          <h3>添加分类</h3>
+          <div class="nv_row"><label>分类名称</label><input type="text" id="nvCatName" placeholder="如：我的工具" /></div>
+          <div class="nv_row"><label>分类ID</label><input type="text" id="nvCatId" placeholder="留空自动生成" /></div>
+          <button type="button" id="nvAddCat" class="nv_btn">添加分类</button>
+        </section>
+
+        <section class="ad_sec">
+          <h3>添加链接</h3>
+          <div class="nv_row"><label>所属分类</label><select id="nvLinkCat"></select></div>
+          <div class="nv_row"><label>名称</label><input type="text" id="nvLinkTitle" placeholder="如：GitHub" /></div>
+          <div class="nv_row"><label>网址</label><input type="text" id="nvLinkUrl" placeholder="https://..." /></div>
+          <div class="nv_row"><label>描述</label><input type="text" id="nvLinkDesc" placeholder="一句话描述" /></div>
+          <button type="button" id="nvAddLink" class="nv_btn">添加链接</button>
+        </section>
+
+        <section class="ad_sec">
+          <h3>添加搜索引擎</h3>
+          <div class="nv_row"><label>名称</label><input type="text" id="seName" placeholder="如：DuckDuckGo" /></div>
+          <div class="nv_row"><label>搜索地址</label><input type="text" id="seUrl" placeholder="https://.../?q=" /></div>
+          <button type="button" id="seAdd" class="nv_btn">添加搜索引擎</button>
+          <p class="nv_hint">搜索地址需以查询参数结尾（如 <code>?q=</code>），前台会拼接关键字。排第一的即默认引擎。</p>
+        </section>
+      </aside>
+
+      <!-- 右侧：管理已有 + 搜索/折叠 + 底部保存条 -->
+      <section class="ad_content" data-tab="nav" id="adContent">
+        <div class="ad_content_head">
+          <div class="ad_tabs">
+            <button type="button" class="ad_tab active" data-tab="nav">分类与链接</button>
+            <button type="button" class="ad_tab" data-tab="se">搜索引擎</button>
+          </div>
+          <p class="nv_hint" id="adTabHint">点分类名前的 ▸ 可折叠/展开；用每行「↑ ↓」调相邻顺序、「顶 / 底」一键置顶或置底。改动需点底部「保存并写回」才会生效。</p>
+          <div class="nv_toolbar">
+            <input type="text" id="nvSearch" class="nv_search" placeholder="搜索分类名称或链接关键字…" />
+            <button type="button" id="nvExpandAll" class="nv_tool_btn">展开全部</button>
+            <button type="button" id="nvCollapseAll" class="nv_tool_btn">收起全部</button>
+          </div>
+        </div>
+
+        <div id="nvFileBar" class="nv_filebar hidden">
+          <span class="nv_file_msg">请选择你的 index.html 文件以载入导航数据：</span>
+          <button type="button" id="nvPickFile" class="nv_btn">选择 index.html</button>
+        </div>
+
+        <div id="nvManageList" class="nv_manage"></div>
+
+        <div id="seManageList" class="nv_manage hidden"></div>
+
+        <div class="ad_savebar">
+          <p class="nv_hint" id="nvHint">修改后点「保存并写回」。</p>
+          <div class="ad_save_acts">
+            <button type="button" id="nvReload" class="nv_mini" title="放弃未保存改动，从文件重新载入">重新载入</button>
+            <button type="button" id="nvSave" class="nv_btn">保存并写回</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 修改密码模态框：登录后点顶栏「修改密码」弹出 -->
+  <div class="pw_modal hidden" id="pwModal">
+    <div class="pw_card">
+      <h3>修改登录密码</h3>
+      <div class="pw_row">
+        <label for="pwOld">当前密码</label>
+        <input type="password" id="pwOld" autocomplete="current-password" placeholder="请输入当前密码" />
+      </div>
+      <div class="pw_row">
+        <label for="pwNew">新密码（至少 6 位）</label>
+        <input type="password" id="pwNew" autocomplete="new-password" placeholder="请输入新密码" />
+      </div>
+      <div class="pw_row">
+        <label for="pwNew2">确认新密码</label>
+        <input type="password" id="pwNew2" autocomplete="new-password" placeholder="再次输入新密码" />
+      </div>
+      <div class="pw_err" id="pwErr"></div>
+      <div class="pw_btns">
+        <button type="button" class="nv_mini" id="pwCancel">取消</button>
+        <button type="button" class="nv_btn" id="pwSubmit">确认修改</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================
+       导航数据管理页（admin.html）—— 纯浏览器端，无需 node serve.js
+       流程：① 客户端登录闸门：SHA-256 比对 localStorage 密码哈希（默认 admin）
+            ② 解锁后由 File System Access 选 index.html，或用 IndexedDB 记住的句柄自动载入
+            ③ 解析 NAV_DATA 到内存增删改/排序，点「保存并写回」用 FSA 直接覆盖文件
+       仅 Chrome / Edge 等 Chromium 浏览器可用（Firefox/Safari 无此 API）
+       ============================================================ */
+    /* 导航数据（内存中编辑，保存时直接写回 index.html 文件，无需服务端） */
+    var NAV_DATA = [];
+    var SEARCH_ENGINES = [];                /* 搜索引擎列表（内存中编辑，保存时写回 index.html） */
+    var rawHtml = '';                       /* index.html 源码（用于解析其中的 NAV_DATA / SEARCH_ENGINES 块） */
+    var currentTab = 'nav';                 /* 右侧当前标签页：nav=分类链接，se=搜索引擎 */
+    var fileHandle = null;                  /* 当前选中的 index.html 文件句柄（File System Access） */
+    var collapsedCats = {};                 /* 已折叠的分类 id 集合 */
+    var filterText = '';                    /* 搜索关键字（按真实索引渲染，过滤态禁用排序） */
+
+    /* 是否支持 File System Access（仅 Chrome / Edge 等 Chromium 系浏览器） */
+    var hasFSA = !!(window.showOpenFilePicker);
+
+    /* ---------- 客户端登录闸门（无服务端，密码哈希存于本机 localStorage） ---------- */
+    var ADMIN_SALT = 'navsite-admin-v1';    /* 哈希盐 */
+    var DEFAULT_PASS = 'admin';             /* 默认密码（首次登录用，请尽快在「修改密码」中更换） */
+
+    function sha256Hex(str) {
+      return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str))
+        .then(function (buf) {
+          return Array.prototype.map.call(new Uint8Array(buf), function (b) {
+            return ('0' + b.toString(16)).slice(-2);
+          }).join('');
+        });
+    }
+    /* 期望的密码哈希：改过密码则取 localStorage，否则取默认密码哈希 */
+    function expectedHash() {
+      var saved = null;
+      try { saved = localStorage.getItem('adminPassHash'); } catch (e) {}
+      if (saved) return Promise.resolve(saved);
+      return sha256Hex(ADMIN_SALT + DEFAULT_PASS);
+    }
+    function verifyPassword(p) {
+      return Promise.all([sha256Hex(ADMIN_SALT + p), expectedHash()])
+        .then(function (a) { return a[0] === a[1]; });
+    }
+
+    /* ---------- IndexedDB：记住选中的文件句柄，免得每次重选 ---------- */
+    function idbOpen() {
+      return new Promise(function (res, rej) {
+        var r = indexedDB.open('nav-admin', 1);
+        r.onupgradeneeded = function () { r.result.createObjectStore('kv'); };
+        r.onsuccess = function () { res(r.result); };
+        r.onerror = function () { rej(r.error); };
+      });
+    }
+    function idbSet(key, val) {
+      return idbOpen().then(function (db) {
+        return new Promise(function (res, rej) {
+          var tx = db.transaction('kv', 'readwrite');
+          tx.objectStore('kv').put(val, key);
+          tx.oncomplete = function () { res(); };
+          tx.onerror = function () { rej(tx.error); };
+        });
+      });
+    }
+    function idbGet(key) {
+      return idbOpen().then(function (db) {
+        return new Promise(function (res, rej) {
+          var tx = db.transaction('kv', 'readonly');
+          var rq = tx.objectStore('kv').get(key);
+          rq.onsuccess = function () { res(rq.result); };
+          rq.onerror = function () { rej(tx.error); };
+        });
+      });
+    }
+    function storeHandle(h) { return idbSet('fileHandle', h); }
+    function restoreHandle() { return idbGet('fileHandle').then(function (h) { return h || null; }).catch(function () { return null; }); }
+
+    /* 询问/请求文件权限（request 需用户手势，自动载入时只 query） */
+    function ensurePermission(handle, mode) {
+      if (!handle.queryPermission) return Promise.resolve(true);
+      return handle.queryPermission({ mode: mode }).then(function (s) {
+        if (s === 'granted') return true;
+        if (s === 'prompt' && handle.requestPermission) {
+          return handle.requestPermission({ mode: mode }).then(function (s2) { return s2 === 'granted'; });
+        }
+        return false;
+      });
+    }
+
+    /* 文件条显隐 */
+    function showFileBar() { var b = document.getElementById('nvFileBar'); if (b) b.classList.remove('hidden'); }
+    function hideFileBar() { var b = document.getElementById('nvFileBar'); if (b) b.classList.add('hidden'); }
+    function setFileBarUnsupported() {
+      var b = document.getElementById('nvFileBar');
+      if (b) { var m = b.querySelector('.nv_file_msg'); if (m) m.textContent = '当前浏览器不支持直接读写文件，请使用 Chrome / Edge，或恢复带 serve.js 鉴权的版本。'; }
+      var btn = document.getElementById('nvPickFile'); if (btn) btn.classList.add('hidden');
+    }
+
+    function showLogin(msg) {
+      document.getElementById('loginView').classList.remove('hidden');
+      document.getElementById('adminView').classList.add('hidden');
+      if (msg) document.getElementById('loginErr').textContent = msg;
+    }
+    function showAdmin() {
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('adminView').classList.remove('hidden');
+    }
+
+    /* 登录：客户端校验密码，解锁管理界面（无服务端） */
+    function doLogin() {
+      var p = document.getElementById('loginPass').value;
+      document.getElementById('loginErr').textContent = '';
+      if (!p) { document.getElementById('loginErr').textContent = '请输入密码'; return; }
+      verifyPassword(p).then(function (ok) {
+        if (ok) {
+          try { sessionStorage.setItem('adminUnlocked', '1'); } catch (e) {}
+          afterUnlock();
+        } else {
+          document.getElementById('loginErr').textContent = '密码错误';
+        }
+      }).catch(function () { document.getElementById('loginErr').textContent = '校验失败，请重试'; });
+    }
+
+    /* 退出登录：清除会话解锁状态 */
+    function doLogout() {
+      fileHandle = null;
+      try { sessionStorage.removeItem('adminUnlocked'); } catch (e) {}
+      showLogin('');
+    }
+
+    /* 修改密码：客户端校验旧密码后，把新密码哈希存入 localStorage（无服务端） */
+    function doChangePass() {
+      var oldP = document.getElementById('pwOld').value;
+      var newP = document.getElementById('pwNew').value;
+      var newP2 = document.getElementById('pwNew2').value;
+      var err = document.getElementById('pwErr');
+      err.textContent = '';
+      if (!oldP || !newP || !newP2) { err.textContent = '请填写所有字段'; return; }
+      if (newP.length < 6) { err.textContent = '新密码至少 6 位'; return; }
+      if (newP !== newP2) { err.textContent = '两次输入的新密码不一致'; return; }
+      verifyPassword(oldP).then(function (ok) {
+        if (!ok) { err.textContent = '当前密码错误'; return; }
+        return sha256Hex(ADMIN_SALT + newP).then(function (h) {
+          try { localStorage.setItem('adminPassHash', h); } catch (e) {}
+          document.getElementById('pwModal').classList.add('hidden');
+          alert('密码已修改成功，请牢记新密码。');
+        });
+      }).catch(function () { err.textContent = '校验失败，请重试'; });
+    }
+
+    /* 从文件句柄读取 index.html 源码并解析 NAV_DATA */
+    function loadFromHandle(handle, silent) {
+      return handle.getFile().then(function (file) { return file.text(); }).then(function (text) {
+        rawHtml = text; fileHandle = handle;
+        parseData(); parseSearchEngines(); fillCatSelect(); renderManageList(); renderEngineList(); updateCount();
+        clearDirty();
+        if (!silent) setHint('已载入 index.html。修改后点「保存并写回」。');
+      });
+    }
+
+    /* 弹出系统文件选择器，选 index.html 并请求读写权限 */
+    function pickAndLoad() {
+      if (!hasFSA) { alert('当前浏览器不支持直接读写文件，请使用 Chrome / Edge。'); return; }
+      var opts = { types: [{ description: 'HTML 文件', accept: { 'text/html': ['.html', '.htm'] } }], excludeAcceptAllOption: false, multiple: false };
+      window.showOpenFilePicker(opts).then(function (handles) {
+        var h = handles[0];
+        return ensurePermission(h, 'readwrite').then(function (granted) {
+          if (!granted) throw new Error('未获得文件权限');
+          return storeHandle(h).then(function () { return loadFromHandle(h, false); });
+        });
+      }).then(function () { hideFileBar(); })
+        .catch(function (e) { setHint('选择文件失败：' + (e && e.message ? e.message : e)); });
+    }
+
+    /* 重新从已选文件载入（放弃未保存改动） */
+    function reloadFromFile() {
+      if (!fileHandle) { pickAndLoad(); return; }
+      loadFromHandle(fileHandle, true).then(function () {
+        setHint('已从文件重新载入（未保存的改动已丢弃）。');
+      }).catch(function (e) { setHint('重新载入失败：' + (e && e.message ? e.message : e)); });
+    }
+
+    /* 把 NAV_DATA 与 SEARCH_ENGINES 序列化后替换回 index.html 源码 */
+    function buildHtml() {
+      var navJson = JSON.stringify(NAV_DATA, null, 2);
+      var re = /const NAV_DATA = \[[\s\S]*?\n\];/;
+      if (!re.test(rawHtml)) throw new Error('未在 index.html 中找到 NAV_DATA 标记。');
+      var out = rawHtml.replace(re, 'const NAV_DATA = ' + navJson + ';');
+      /* 搜索引擎块：若文件里存在则一并替换（不存在则保持原样，避免误改） */
+      var seJson = JSON.stringify(SEARCH_ENGINES, null, 2);
+      var seRe = /window\.SEARCH_ENGINES\s*=\s*\[[\s\S]*?\n\s*\];/;
+      if (seRe.test(out)) out = out.replace(seRe, 'window.SEARCH_ENGINES = ' + seJson + ';');
+      return out;
+    }
+
+    /* 保存：直接写回选中的 index.html 文件（无服务端） */
+    function doSave() {
+      if (!fileHandle) { setHint('请先选择 index.html 文件。'); return; }
+      setHint('正在保存…');
+      ensurePermission(fileHandle, 'readwrite').then(function (granted) {
+        if (!granted) throw new Error('未获得文件写入权限');
+        return fileHandle.createWritable();
+      }).then(function (writable) {
+        var out = buildHtml();
+        return writable.write(out).then(function () { return writable.close(); });
+      }).then(function () {
+        clearDirty(); setHint('已保存并写回 index.html ✓（刷新前台页面即可看到改动）');
+      }).catch(function (e) { setHint('保存失败：' + (e && e.message ? e.message : e)); });
+    }
+
+    /* 从 index.html 源码解析 NAV_DATA 到内存 */
+    function parseData() {
+      var m = rawHtml.match(/const NAV_DATA = (\[[\s\S]*?\n\]);/);
+      if (!m) throw new Error('未在 index.html 中找到 NAV_DATA 标记。');
+      NAV_DATA = JSON.parse(m[1]);
+    }
+
+    /* 从 index.html 源码解析 SEARCH_ENGINES 到内存（缺失则不报错，默认空数组） */
+    function parseSearchEngines() {
+      var m = rawHtml.match(/window\.SEARCH_ENGINES\s*=\s*(\[[\s\S]*?\n\s*\]);/);
+      if (!m) { SEARCH_ENGINES = []; return; }
+      try { SEARCH_ENGINES = JSON.parse(m[1]); } catch (e) { SEARCH_ENGINES = []; }
+    }
+
+    /* 更新顶栏计数 */
+    function updateCount() {
+      var cats = NAV_DATA.length;
+      var links = NAV_DATA.reduce(function (s, c) { return s + (c.links ? c.links.length : 0); }, 0);
+      var c = document.getElementById('adCount'); if (c) c.textContent = cats;
+      var l = document.getElementById('adSubLinks'); if (l) l.textContent = links;
+      var s = document.getElementById('adSubSe'); if (s) s.textContent = SEARCH_ENGINES.length;
+    }
+
+    function setHint(t) { var el = document.getElementById('nvHint'); if (el) el.textContent = t; }
+
+    /* 刷新「所属分类」下拉（含当前所有分类） */
+    function fillCatSelect() {
+      var sel = document.getElementById('nvLinkCat');
+      sel.innerHTML = '';
+      NAV_DATA.forEach(function (cat) {
+        var o = document.createElement('option');
+        o.value = cat.id; o.textContent = cat.name; sel.appendChild(o);
+      });
+    }
+
+    /* 依据名称生成分类 id */
+    function genCatId(name) {
+      var base = 'cat-' + name.trim().toLowerCase()
+        .replace(/[^a-z0-9一-龥]+/g, '-').replace(/^-+|-+$/g, '');
+      return base || ('cat-' + Date.now());
+    }
+
+    /* 添加分类 */
+    function addCategory() {
+      var name = document.getElementById('nvCatName').value.trim();
+      if (!name) { alert('请输入分类名称'); return; }
+      var id = document.getElementById('nvCatId').value.trim() || genCatId(name);
+      if (NAV_DATA.some(function (c) { return c.id === id; })) { alert('分类ID已存在：' + id); return; }
+      NAV_DATA.push({ id: id, name: name, links: [] });
+      document.getElementById('nvCatName').value = '';
+      document.getElementById('nvCatId').value = '';
+      applyAndRefresh('已添加分类「' + name + '」，记得点保存写回文件。');
+    }
+
+    /* 添加链接 */
+    function addLink() {
+      var catId = document.getElementById('nvLinkCat').value;
+      var cat = NAV_DATA.find(function (c) { return c.id === catId; });
+      if (!cat) { alert('请先选择分类'); return; }
+      var title = document.getElementById('nvLinkTitle').value.trim();
+      var url = document.getElementById('nvLinkUrl').value.trim();
+      if (!title || !url) { alert('请输入名称和网址'); return; }
+      var desc = document.getElementById('nvLinkDesc').value.trim();
+      cat.links.push({ url: url, title: title, desc: desc });
+      document.getElementById('nvLinkTitle').value = '';
+      document.getElementById('nvLinkUrl').value = '';
+      document.getElementById('nvLinkDesc').value = '';
+      applyAndRefresh('已向「' + cat.name + '」添加链接「' + title + '」，记得点保存写回文件。');
+    }
+
+    /* 添加搜索引擎 */
+    function addSearchEngine() {
+      var name = document.getElementById('seName').value.trim();
+      var url = document.getElementById('seUrl').value.trim();
+      if (!name || !url) { alert('请输入名称和搜索地址'); return; }
+      SEARCH_ENGINES.push({ name: name, url: url });
+      document.getElementById('seName').value = '';
+      document.getElementById('seUrl').value = '';
+      applyAndRefresh('已添加搜索引擎「' + name + '」，记得点保存写回文件。');
+    }
+
+    /* 生成排序按钮（过滤态或首/末项时禁用） */
+    function mkMove(act, catId, idx, txt, title, disabled) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'nv_mini'; b.title = title;
+      b.setAttribute('data-act', act); b.setAttribute('data-cat', catId);
+      if (idx !== null && idx !== undefined) b.setAttribute('data-idx', String(idx));
+      b.textContent = txt;
+      if (disabled) b.disabled = true;
+      return b;
+    }
+
+    /* 重绘「管理已有」列表：支持搜索过滤 + 分类折叠，链接按真实索引渲染 */
+    function renderManageList() {
+      var box = document.getElementById('nvManageList');
+      if (!box) return;
+      box.innerHTML = '';
+      var kw = (filterText || '').trim().toLowerCase();
+      var anyShown = false;
+      NAV_DATA.forEach(function (cat, ci) {
+        var catName = cat.name || '';
+        var catMatch = !kw || catName.toLowerCase().indexOf(kw) > -1;
+        var shown = [];                                   /* 命中的链接在 NAV_DATA 中的真实下标 */
+        (cat.links || []).forEach(function (l, i) {
+          if (!kw) { shown.push(i); return; }
+          if (catMatch) { shown.push(i); return; }
+          var hay = ((l.title || '') + ' ' + (l.url || '') + ' ' + (l.desc || '')).toLowerCase();
+          if (hay.indexOf(kw) > -1) shown.push(i);
+        });
+        if (kw && !catMatch && shown.length === 0) return; /* 整类不匹配则隐藏 */
+        anyShown = true;
+        var catEl = document.createElement('div');
+        catEl.className = 'nv_cat' + (collapsedCats[cat.id] ? ' nv_collapsed' : '');
+        catEl.setAttribute('data-cat', cat.id);
+        /* 头部：折叠钮 + 名称 + 链接数 + 排序/操作 */
+        var head = document.createElement('div'); head.className = 'nv_cat_head';
+        var tog = document.createElement('button'); tog.type = 'button'; tog.className = 'nv_cat_toggle';
+        tog.setAttribute('data-act', 'toggle-cat'); tog.setAttribute('data-cat', cat.id);
+        tog.textContent = collapsedCats[cat.id] ? '▸' : '▾'; tog.title = '折叠 / 展开';
+        var name = document.createElement('span'); name.className = 'nv_cat_name'; name.textContent = catName;
+        var meta = document.createElement('span'); meta.className = 'nv_cat_meta'; meta.textContent = (cat.links ? cat.links.length : 0) + ' 条';
+        var acts = document.createElement('div'); acts.className = 'nv_cat_acts';
+        var bTop = mkMove('move-cat-top', cat.id, null, '顶', '置顶分类', ci === 0 || !!kw);
+        var bBottom = mkMove('move-cat-bottom', cat.id, null, '底', '置底分类', ci === NAV_DATA.length - 1 || !!kw);
+        var bUp = mkMove('move-cat-up', cat.id, null, '↑', '上移分类', ci === 0 || !!kw);
+        var bDn = mkMove('move-cat-down', cat.id, null, '↓', '下移分类', ci === NAV_DATA.length - 1 || !!kw);
+        var bEdit = document.createElement('button'); bEdit.type = 'button'; bEdit.className = 'nv_mini'; bEdit.setAttribute('data-act', 'edit-cat'); bEdit.setAttribute('data-cat', cat.id); bEdit.textContent = '改名';
+        var bDel = document.createElement('button'); bDel.type = 'button'; bDel.className = 'nv_mini nv_danger'; bDel.setAttribute('data-cat', cat.id); bDel.setAttribute('data-act', 'del-cat'); bDel.textContent = '删除分类';
+        acts.appendChild(bTop); acts.appendChild(bBottom); acts.appendChild(bUp); acts.appendChild(bDn); acts.appendChild(bEdit); acts.appendChild(bDel);
+        head.appendChild(tog); head.appendChild(name); head.appendChild(meta); head.appendChild(acts);
+        catEl.appendChild(head);
+        var links = document.createElement('div'); links.className = 'nv_links';
+        if (!shown.length) {
+          var empty = document.createElement('div'); empty.className = 'nv_empty';
+          empty.textContent = (cat.links && cat.links.length) ? '（无匹配链接）' : '（暂无链接）';
+          links.appendChild(empty);
+        } else {
+          shown.forEach(function (i) {
+            var l = cat.links[i];
+            var row = document.createElement('div'); row.className = 'nv_link_row'; row.setAttribute('data-cat', cat.id); row.setAttribute('data-idx', String(i));
+            var main = document.createElement('div'); main.className = 'nv_link_main';
+            var t = document.createElement('span'); t.className = 'nv_link_title'; t.textContent = l.title || '';
+            var u = document.createElement('span'); u.className = 'nv_link_url'; u.textContent = l.url || '';
+            main.appendChild(t); main.appendChild(u);
+            if (l.desc) { var d = document.createElement('span'); d.className = 'nv_link_desc'; d.textContent = l.desc; main.appendChild(d); }
+            var lacts = document.createElement('div'); lacts.className = 'nv_link_acts';
+            var blTop = mkMove('move-link-top', cat.id, i, '顶', '置顶链接', i === 0 || !!kw);
+            var blBottom = mkMove('move-link-bottom', cat.id, i, '底', '置底链接', i === cat.links.length - 1 || !!kw);
+            var blUp = mkMove('move-link-up', cat.id, i, '↑', '上移链接', i === 0 || !!kw);
+            var blDn = mkMove('move-link-down', cat.id, i, '↓', '下移链接', i === cat.links.length - 1 || !!kw);
+            var eLink = document.createElement('button'); eLink.type = 'button'; eLink.className = 'nv_mini'; eLink.setAttribute('data-act', 'edit-link'); eLink.setAttribute('data-cat', cat.id); eLink.setAttribute('data-idx', String(i)); eLink.textContent = '编辑';
+            var dLink = document.createElement('button'); dLink.type = 'button'; dLink.className = 'nv_mini nv_danger'; dLink.setAttribute('data-act', 'del-link'); dLink.setAttribute('data-cat', cat.id); dLink.setAttribute('data-idx', String(i)); dLink.textContent = '删除';
+            lacts.appendChild(blTop); lacts.appendChild(blBottom); lacts.appendChild(blUp); lacts.appendChild(blDn); lacts.appendChild(eLink); lacts.appendChild(dLink);
+            row.appendChild(main); row.appendChild(lacts); links.appendChild(row);
+          });
+        }
+        catEl.appendChild(links); box.appendChild(catEl);
+      });
+      if (!anyShown) {
+        var none = document.createElement('div'); none.className = 'nv_empty';
+        none.textContent = '没有匹配「' + filterText + '」的分类或链接。';
+        box.appendChild(none);
+      }
+    }
+
+    /* 重绘「搜索引擎」列表：支持搜索过滤，行内可编辑/删除/排序（默认=排首位） */
+    function renderEngineList() {
+      var box = document.getElementById('seManageList');
+      if (!box) return;
+      box.innerHTML = '';
+      var kw = (filterText || '').trim().toLowerCase();
+      var anyShown = false;
+      SEARCH_ENGINES.forEach(function (en, i) {
+        if (kw && ((en.name || '') + ' ' + (en.url || '')).toLowerCase().indexOf(kw) < 0) return;
+        anyShown = true;
+        var row = document.createElement('div');
+        row.className = 'nv_link_row'; row.setAttribute('data-idx', String(i));
+        var main = document.createElement('div'); main.className = 'nv_link_main';
+        var t = document.createElement('span'); t.className = 'nv_link_title';
+        t.textContent = (en.name || '') + (i === 0 ? '（默认）' : '');
+        var u = document.createElement('span'); u.className = 'nv_link_url'; u.textContent = en.url || '';
+        main.appendChild(t); main.appendChild(u);
+        var acts = document.createElement('div'); acts.className = 'nv_link_acts';
+        var bTop = mkMove('move-se-top', '', i, '顶', '设为默认引擎', i === 0 || !!kw);
+        var bUp = mkMove('move-se-up', '', i, '↑', '上移引擎', i === 0 || !!kw);
+        var bDn = mkMove('move-se-down', '', i, '↓', '下移引擎', i === SEARCH_ENGINES.length - 1 || !!kw);
+        var eEdit = document.createElement('button'); eEdit.type = 'button'; eEdit.className = 'nv_mini'; eEdit.setAttribute('data-act', 'edit-se'); eEdit.setAttribute('data-idx', String(i)); eEdit.textContent = '编辑';
+        var dDel = document.createElement('button'); dDel.type = 'button'; dDel.className = 'nv_mini nv_danger'; dDel.setAttribute('data-act', 'del-se'); dDel.setAttribute('data-idx', String(i)); dDel.textContent = '删除';
+        acts.appendChild(bTop); acts.appendChild(bUp); acts.appendChild(bDn); acts.appendChild(eEdit); acts.appendChild(dDel);
+        row.appendChild(main); row.appendChild(acts); box.appendChild(row);
+      });
+      if (!anyShown) {
+        var none = document.createElement('div'); none.className = 'nv_empty';
+        none.textContent = kw ? ('没有匹配「' + filterText + '」的搜索引擎。') : '（暂无搜索引擎）';
+        box.appendChild(none);
+      }
+    }
+
+    /* 切换右侧标签页（分类链接 / 搜索引擎）：切换列表显隐、提示与搜索占位 */
+    function switchTab(tab) {
+      currentTab = tab;
+      var content = document.getElementById('adContent');
+      if (content) content.setAttribute('data-tab', tab);
+      document.querySelectorAll('.ad_tab').forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-tab') === tab);
+      });
+      var navList = document.getElementById('nvManageList');
+      var seList = document.getElementById('seManageList');
+      if (navList) navList.classList.toggle('hidden', tab !== 'nav');
+      if (seList) seList.classList.toggle('hidden', tab !== 'se');
+      var hint = document.getElementById('adTabHint');
+      if (hint) hint.textContent = tab === 'nav'
+        ? '点分类名前的 ▸ 可折叠/展开；用每行「↑ ↓」调相邻顺序、「顶 / 底」一键置顶或置底。改动需点底部「保存并写回」才会生效。'
+        : '第一行「顶」即把该引擎设为前台默认（排首位）；可用「↑ ↓」调整顺序、点「编辑」改名称或地址。改动需点底部「保存并写回」。';
+      var searchEl = document.getElementById('nvSearch');
+      if (searchEl) searchEl.placeholder = tab === 'se' ? '搜索搜索引擎名称或地址…' : '搜索分类名称或链接关键字…';
+      renderActive();
+    }
+
+    /* 重绘当前标签页对应的列表 */
+    function renderActive() {
+      if (currentTab === 'se') renderEngineList(); else renderManageList();
+    }
+
+    /* 管理列表点击委托：分发到具体动作 */
+    function onManageClick(e) {
+      var btn = e.target.closest('button[data-act]');
+      if (!btn) return;
+      handleManageAct(btn.getAttribute('data-act'), btn.getAttribute('data-cat'), btn.getAttribute('data-idx'), btn);
+    }
+
+    /* 处理改名/删除分类、编辑/删除链接（就地编辑态） */
+    function handleManageAct(act, catId, idx, btn) {
+      var cat = NAV_DATA.find(function (c) { return c.id === catId; });
+      if (!cat) return;
+      if (act === 'toggle-cat') {
+        if (collapsedCats[catId]) delete collapsedCats[catId]; else collapsedCats[catId] = true;
+        renderManageList(); return;
+      }
+      if (act === 'edit-cat') {
+        var head = btn.closest('.nv_cat').querySelector('.nv_cat_head');
+        head.innerHTML = '';
+        var inp = document.createElement('input'); inp.className = 'nv_edit_input'; inp.value = cat.name;
+        var acts = document.createElement('div'); acts.className = 'nv_cat_acts';
+        var s = document.createElement('button'); s.type = 'button'; s.className = 'nv_mini'; s.setAttribute('data-act', 'save-cat'); s.setAttribute('data-cat', catId); s.textContent = '保存';
+        var c = document.createElement('button'); c.type = 'button'; c.className = 'nv_mini'; c.setAttribute('data-act', 'cancel-cat'); c.setAttribute('data-cat', catId); c.textContent = '取消';
+        acts.appendChild(s); acts.appendChild(c); head.appendChild(inp); head.appendChild(acts); inp.focus(); inp.select();
+      } else if (act === 'save-cat') {
+        var v = btn.closest('.nv_cat').querySelector('.nv_edit_input').value.trim();
+        if (!v) { alert('分类名不能为空'); return; }
+        cat.name = v; applyAndRefresh('已重命名分类为「' + v + '」，记得点保存写回文件。');
+      } else if (act === 'cancel-cat') {
+        renderManageList();
+      } else if (act === 'del-cat') {
+        if (!confirm('确定删除分类「' + cat.name + '」及其下全部链接？')) return;
+        var i = NAV_DATA.indexOf(cat);
+        if (i > -1) NAV_DATA.splice(i, 1);
+        applyAndRefresh('已删除分类「' + cat.name + '」，记得点保存写回文件。');
+      } else if (act === 'edit-link') {
+        var row = btn.closest('.nv_link_row'); var l = cat.links[Number(idx)];
+        row.classList.add('nv_editing'); row.innerHTML = '';
+        var fields = document.createElement('div'); fields.className = 'nv_edit_fields';
+        var it = document.createElement('input'); it.className = 'nv_edit_input'; it.value = l.title || ''; it.placeholder = '名称';
+        var iu = document.createElement('input'); iu.className = 'nv_edit_input'; iu.value = l.url || ''; iu.placeholder = '网址';
+        var idd = document.createElement('input'); idd.className = 'nv_edit_input'; idd.value = l.desc || ''; idd.placeholder = '描述';
+        fields.appendChild(it); fields.appendChild(iu); fields.appendChild(idd);
+        var lacts = document.createElement('div'); lacts.className = 'nv_link_acts';
+        var s2 = document.createElement('button'); s2.type = 'button'; s2.className = 'nv_mini'; s2.setAttribute('data-act', 'save-link'); s2.setAttribute('data-cat', catId); s2.setAttribute('data-idx', idx); s2.textContent = '保存';
+        var c2 = document.createElement('button'); c2.type = 'button'; c2.className = 'nv_mini'; c2.setAttribute('data-act', 'cancel-link'); c2.setAttribute('data-cat', catId); c2.setAttribute('data-idx', idx); c2.textContent = '取消';
+        lacts.appendChild(s2); lacts.appendChild(c2); row.appendChild(fields); row.appendChild(lacts); it.focus();
+      } else if (act === 'save-link') {
+        var row2 = btn.closest('.nv_link_row'); var ins = row2.querySelectorAll('.nv_edit_input');
+        var title = ins[0].value.trim(), url = ins[1].value.trim(), desc = ins[2].value.trim();
+        if (!title || !url) { alert('名称和网址不能为空'); return; }
+        cat.links[Number(idx)] = { url: url, title: title, desc: desc };
+        applyAndRefresh('已更新链接「' + title + '」，记得点保存写回文件。');
+      } else if (act === 'cancel-link') {
+        renderManageList();
+      } else if (act === 'del-link') {
+        if (!confirm('确定删除链接「' + (cat.links[Number(idx)] && cat.links[Number(idx)].title) + '」？')) return;
+        cat.links.splice(Number(idx), 1);
+        applyAndRefresh('已删除链接，记得点保存写回文件。');
+      } else if (act === 'move-cat-up' || act === 'move-cat-down') {
+        /* 移动分类：与相邻分类交换顺序（首/末项的按钮已 disabled 兜底） */
+        var ci = NAV_DATA.indexOf(cat); if (ci < 0) return;
+        var tci = act === 'move-cat-up' ? ci - 1 : ci + 1;
+        if (tci < 0 || tci >= NAV_DATA.length) return;
+        var boxC = document.getElementById('nvManageList'); var stC = boxC ? boxC.scrollTop : 0;
+        var tmpc = NAV_DATA[ci]; NAV_DATA[ci] = NAV_DATA[tci]; NAV_DATA[tci] = tmpc;
+        fillCatSelect(); renderManageList(); updateCount();
+        if (boxC) boxC.scrollTop = stC;
+        markDirty();
+        setHint('已调整分类顺序，记得点保存写回文件。');
+      } else if (act === 'move-link-up' || act === 'move-link-down') {
+        /* 移动链接：与相邻链接交换顺序（首/末项的按钮已 disabled 兜底） */
+        var li = Number(idx);
+        var tli = act === 'move-link-up' ? li - 1 : li + 1;
+        if (tli < 0 || tli >= cat.links.length) return;
+        var boxL = document.getElementById('nvManageList'); var stL = boxL ? boxL.scrollTop : 0;
+        var tmpl = cat.links[li]; cat.links[li] = cat.links[tli]; cat.links[tli] = tmpl;
+        fillCatSelect(); renderManageList(); updateCount();
+        if (boxL) boxL.scrollTop = stL;
+        markDirty();
+        setHint('已调整链接顺序，记得点保存写回文件。');
+      } else if (act === 'move-cat-top' || act === 'move-cat-bottom') {
+        /* 一键置顶/置底分类：取出该分类再放到数组首位/末位（首/末项的按钮已 disabled 兜底） */
+        var ci2 = NAV_DATA.indexOf(cat); if (ci2 < 0) return;
+        var boxT = document.getElementById('nvManageList'); var stT = boxT ? boxT.scrollTop : 0;
+        var moved = NAV_DATA.splice(ci2, 1)[0];
+        if (act === 'move-cat-top') NAV_DATA.unshift(moved); else NAV_DATA.push(moved);
+        fillCatSelect(); renderManageList(); updateCount();
+        if (boxT) boxT.scrollTop = stT;
+        markDirty();
+        setHint(act === 'move-cat-top' ? '已置顶分类「' + cat.name + '」，记得点保存写回文件。' : '已置底分类「' + cat.name + '」，记得点保存写回文件。');
+      } else if (act === 'move-link-top' || act === 'move-link-bottom') {
+        /* 一键置顶/置底链接：取出该链接再放到所属分类数组首位/末位（首/末项的按钮已 disabled 兜底） */
+        var li2 = Number(idx);
+        var boxLT = document.getElementById('nvManageList'); var stLT = boxLT ? boxLT.scrollTop : 0;
+        var movedL = cat.links.splice(li2, 1)[0];
+        if (act === 'move-link-top') cat.links.unshift(movedL); else cat.links.push(movedL);
+        fillCatSelect(); renderManageList(); updateCount();
+        if (boxLT) boxLT.scrollTop = stLT;
+        markDirty();
+        setHint(act === 'move-link-top' ? '已置顶链接「' + (movedL.title || '') + '」，记得点保存写回文件。' : '已置底链接「' + (movedL.title || '') + '」，记得点保存写回文件。');
+      }
+    }
+
+    /* 搜索引擎列表点击委托：分发到具体动作 */
+    function onEngineClick(e) {
+      var btn = e.target.closest('button[data-act]');
+      if (!btn) return;
+      handleEngineAct(btn.getAttribute('data-act'), btn.getAttribute('data-idx'), btn);
+    }
+
+    /* 处理搜索引擎的编辑/删除/排序（就地编辑态，逻辑与链接类似） */
+    function handleEngineAct(act, idx, btn) {
+      var i = Number(idx);
+      if (act === 'edit-se') {
+        var row = btn.closest('.nv_link_row'); var en = SEARCH_ENGINES[i];
+        row.classList.add('nv_editing'); row.innerHTML = '';
+        var fields = document.createElement('div'); fields.className = 'nv_edit_fields';
+        var it = document.createElement('input'); it.className = 'nv_edit_input'; it.value = en.name || ''; it.placeholder = '名称';
+        var iu = document.createElement('input'); iu.className = 'nv_edit_input'; iu.value = en.url || ''; iu.placeholder = '搜索地址';
+        fields.appendChild(it); fields.appendChild(iu);
+        var acts = document.createElement('div'); acts.className = 'nv_link_acts';
+        var s = document.createElement('button'); s.type = 'button'; s.className = 'nv_mini'; s.setAttribute('data-act', 'save-se'); s.setAttribute('data-idx', String(i)); s.textContent = '保存';
+        var c = document.createElement('button'); c.type = 'button'; c.className = 'nv_mini'; c.setAttribute('data-act', 'cancel-se'); c.setAttribute('data-idx', String(i)); c.textContent = '取消';
+        acts.appendChild(s); acts.appendChild(c); row.appendChild(fields); row.appendChild(acts); it.focus();
+      } else if (act === 'save-se') {
+        var row2 = btn.closest('.nv_link_row'); var ins = row2.querySelectorAll('.nv_edit_input');
+        var name = ins[0].value.trim(), url = ins[1].value.trim();
+        if (!name || !url) { alert('名称和搜索地址不能为空'); return; }
+        SEARCH_ENGINES[i] = { name: name, url: url };
+        applyAndRefresh('已更新搜索引擎「' + name + '」，记得点保存写回文件。');
+      } else if (act === 'cancel-se') {
+        renderEngineList();
+      } else if (act === 'del-se') {
+        if (!confirm('确定删除搜索引擎「' + (SEARCH_ENGINES[i] && SEARCH_ENGINES[i].name) + '」？')) return;
+        SEARCH_ENGINES.splice(i, 1);
+        applyAndRefresh('已删除搜索引擎，记得点保存写回文件。');
+      } else if (act === 'move-se-up' || act === 'move-se-down') {
+        /* 移动搜索引擎：与相邻项交换顺序（首/末项的按钮已 disabled 兜底） */
+        var tli = act === 'move-se-up' ? i - 1 : i + 1;
+        if (tli < 0 || tli >= SEARCH_ENGINES.length) return;
+        var boxL = document.getElementById('seManageList'); var stL = boxL ? boxL.scrollTop : 0;
+        var tmp = SEARCH_ENGINES[i]; SEARCH_ENGINES[i] = SEARCH_ENGINES[tli]; SEARCH_ENGINES[tli] = tmp;
+        renderEngineList(); updateCount();
+        if (boxL) boxL.scrollTop = stL;
+        markDirty();
+        setHint('已调整搜索引擎顺序，记得点保存写回文件。');
+      } else if (act === 'move-se-top' || act === 'move-se-bottom') {
+        /* 一键置顶=设为默认（移到首位）/ 置底（移到末位，按钮已 disabled 兜底） */
+        var boxT = document.getElementById('seManageList'); var stT = boxT ? boxT.scrollTop : 0;
+        var moved = SEARCH_ENGINES.splice(i, 1)[0];
+        if (act === 'move-se-top') SEARCH_ENGINES.unshift(moved); else SEARCH_ENGINES.push(moved);
+        renderEngineList(); updateCount();
+        if (boxT) boxT.scrollTop = stT;
+        markDirty();
+        setHint(act === 'move-se-top' ? '已将「' + (moved.name || '') + '」设为默认搜索引擎（排首位）。' : '已将「' + (moved.name || '') + '」置底，记得点保存写回文件。');
+      }
+    }
+
+    /* 未保存改动红点提示 */
+    function markDirty() { var s = document.getElementById('nvSave'); if (s) s.classList.add('nv_dirty'); }
+    function clearDirty() { var s = document.getElementById('nvSave'); if (s) s.classList.remove('nv_dirty'); }
+
+    /* 统一刷新：重渲染列表 + 下拉 + 计数，并给出提示 */
+    function applyAndRefresh(hint) {
+      fillCatSelect(); renderManageList(); renderEngineList(); updateCount();
+      markDirty();
+      if (hint) setHint(hint);
+    }
+
+    /* 解锁后：尝试用已记住的文件句柄自动载入，否则提示选择文件 */
+    function afterUnlock() {
+      showAdmin();
+      if (!hasFSA) { setFileBarUnsupported(); showFileBar(); return; }
+      restoreHandle().then(function (h) {
+        if (!h) throw new Error('no-handle');
+        return ensurePermission(h, 'read').then(function (granted) {
+          if (!granted) throw new Error('no-permission');
+          return loadFromHandle(h, true);
+        });
+      }).then(function () { hideFileBar(); })
+        .catch(function () { showFileBar(); });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      /* 登录 / 退出 */
+      document.getElementById('loginBtn').addEventListener('click', doLogin);
+      document.getElementById('loginPass').addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
+      document.getElementById('adLogout').addEventListener('click', doLogout);
+
+      /* 修改密码：打开/关闭模态框、提交 */
+      var pwModal = document.getElementById('pwModal');
+      document.getElementById('adPw').addEventListener('click', function () {
+        document.getElementById('pwOld').value = '';
+        document.getElementById('pwNew').value = '';
+        document.getElementById('pwNew2').value = '';
+        document.getElementById('pwErr').textContent = '';
+        pwModal.classList.remove('hidden');
+      });
+      document.getElementById('pwCancel').addEventListener('click', function () { pwModal.classList.add('hidden'); });
+      pwModal.addEventListener('click', function (e) { if (e.target === pwModal) pwModal.classList.add('hidden'); });
+      document.getElementById('pwSubmit').addEventListener('click', doChangePass);
+
+      /* 管理按钮 + 列表委托 */
+      document.getElementById('nvAddCat').addEventListener('click', addCategory);
+      document.getElementById('nvAddLink').addEventListener('click', addLink);
+      document.getElementById('seAdd').addEventListener('click', addSearchEngine);
+      document.getElementById('nvSave').addEventListener('click', doSave);
+      var nvPick = document.getElementById('nvPickFile');
+      if (nvPick) nvPick.addEventListener('click', pickAndLoad);
+      var nvList = document.getElementById('nvManageList');
+      if (nvList && !nvList._bound) { nvList.addEventListener('click', onManageClick); nvList._bound = true; }
+      var seList = document.getElementById('seManageList');
+      if (seList && !seList._bound) { seList.addEventListener('click', onEngineClick); seList._bound = true; }
+      /* 标签页切换：分类链接 / 搜索引擎 */
+      document.querySelectorAll('.ad_tab').forEach(function (b) {
+        b.addEventListener('click', function () { switchTab(b.getAttribute('data-tab')); });
+      });
+
+      /* 工具条：搜索过滤 + 展开/收起全部 */
+      var searchEl = document.getElementById('nvSearch');
+      if (searchEl) searchEl.addEventListener('input', function () { filterText = this.value; renderActive(); });
+      var exAll = document.getElementById('nvExpandAll');
+      if (exAll) exAll.addEventListener('click', function () { NAV_DATA.forEach(function (c) { delete collapsedCats[c.id]; }); renderManageList(); });
+      var coAll = document.getElementById('nvCollapseAll');
+      if (coAll) coAll.addEventListener('click', function () { NAV_DATA.forEach(function (c) { collapsedCats[c.id] = true; }); renderManageList(); });
+      /* 重新载入：放弃未保存改动，从已选文件重新读取 */
+      var reloadEl = document.getElementById('nvReload');
+      if (reloadEl) reloadEl.addEventListener('click', function () { if (confirm('放弃当前未保存的修改，从文件重新载入？')) reloadFromFile(); });
+
+      /* 主题切换：在 light / dark / auto 间循环，并存入 localStorage */
+      var tb = document.getElementById('adTheme');
+      if (tb) tb.addEventListener('click', function () {
+        var cur = document.documentElement.getAttribute('data-theme') || 'auto';
+        var order = ['light', 'dark', 'auto'];
+        var next = order[(order.indexOf(cur) + 1) % 3];
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('themePref', next); } catch (e) {}
+      });
+
+      /* 会话内已解锁则直接进入，否则显示登录框 */
+      var wasUnlocked = false;
+      try { wasUnlocked = sessionStorage.getItem('adminUnlocked') === '1'; } catch (e) {}
+      switchTab('nav');   /* 初始化标签页显隐与提示 */
+      if (wasUnlocked) afterUnlock(); else showLogin('');
+    });
+  </script>
+</body>
+</html>
