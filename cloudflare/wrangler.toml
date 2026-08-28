@@ -1,0 +1,27 @@
+# Cloudflare Worker 配置：导航站数据读写后端
+# 部署步骤：
+#   1. 安装 wrangler：npm install -g wrangler
+#   2. 登录：wrangler login
+#   3. 创建 KV 命名空间：wrangler kv namespace create NAV_KV
+#      -> 把输出的 id 填到下方 [[kv_namespaces]] 的 id
+#   4. 设置管理员密钥（推荐用 secret，不要写进文件）：
+#      wrangler secret put ADMIN_SECRET
+#      （这个密钥要和 admin.html「Cloudflare KV」标签页里填的「管理员密钥」完全一致）
+#   5. 部署：wrangler deploy
+#
+# 说明：本 Worker 仅作为导航数据的「读写后端」，不托管整个站点。
+#       静态站点（index.html / admin.html）仍用 Cloudflare Pages 直接上传部署，
+#       前台从 <NAV_DATA_URL>/nav-data 拉数据，admin 通过本 Worker 写回 KV。
+
+name = "nav-data-api"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+
+# KV 命名空间绑定（先创建再填 id）
+[[kv_namespaces]]
+binding = "NAV_KV"
+id = "在此填入你的_KV_Namespace_ID"
+
+# 管理员密钥（写接口校验用）。更安全的做法是用上面的 wrangler secret put，而非写在这里。
+[vars]
+ADMIN_SECRET = "在此改成你自己的强随机密钥_例如_openssl_rand_hex_32"

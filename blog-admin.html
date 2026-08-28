@@ -1,0 +1,1960 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文章后台 · 顶级索引</title>
+<style>
+/* ============================================================
+ * 主题变量（与 new.html / index.html 同主色 #425AEF，暗色模式自动适配）
+ * ============================================================ */
+:root {
+  --theme:      #425AEF;
+  --theme-2:    #364fc7;
+  --bg:         #f5f6fa;
+  --panel:      #ffffff;
+  --panel-2:    #fafbff;
+  --text:       #2e3142;
+  --text-2:     #6c6c80;
+  --text-3:     #9f9faf;
+  --border:     #ececf2;
+  --accent:     #425AEF;
+  --accent-soft:#eef0fe;
+  --danger:     #e74c3c;
+  --success:    #2ecc71;
+  --shadow:     0 1px 2px rgba(40,40,80,.04), 0 4px 14px rgba(40,40,80,.06);
+  --radius:     10px;
+}
+[data-theme="dark"] {
+  --bg:         #1a1c25;
+  --panel:      #24272f;
+  --panel-2:    #2c2f38;
+  --text:       #e6e6ee;
+  --text-2:     #a4a4b8;
+  --text-3:     #6f6f86;
+  --border:     #353945;
+  --accent:     #6b7ef5;
+  --accent-soft:#2a2f55;
+  --shadow:     0 1px 2px rgba(0,0,0,.18), 0 6px 16px rgba(0,0,0,.22);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font: 14px/1.55 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+button { font: inherit; cursor: pointer; }
+input, textarea { font: inherit; color: inherit; }
+
+/* ============================================================
+ * 登录闸门（覆盖全屏，未解锁时显示）
+ * ============================================================ */
+.gate {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+}
+.gate.hidden { display: none; }
+.gate-card {
+  width: 360px; max-width: calc(100vw - 32px);
+  background: var(--panel);
+  border-radius: 14px;
+  padding: 32px 28px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.gate-card .logo {
+  font-size: 16px; font-weight: 700;
+  color: var(--accent); margin-bottom: 8px;
+  letter-spacing: -.5px;
+}
+.gate-card h2 {
+  margin: 0 0 18px; font-size: 18px; font-weight: 600;
+  color: var(--text);
+}
+.gate-card input {
+  width: 100%; padding: 11px 14px;
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 8px; outline: none;
+  transition: border .15s, background .15s;
+  margin-bottom: 12px;
+}
+.gate-card input:focus { border-color: var(--accent); background: var(--panel); }
+.gate-card button {
+  width: 100%; padding: 11px;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: 8px;
+  font-weight: 600;
+  transition: background .15s, transform .1s;
+}
+.gate-card button:hover { background: var(--theme-2); }
+.gate-card button:active { transform: scale(.98); }
+.gate-card .err { color: var(--danger); font-size: 12px; margin: 8px 0 0; min-height: 16px; }
+.gate-card .hint { color: var(--text-3); font-size: 11px; margin: 14px 0 0; }
+.gate-card .hint code {
+  padding: 1px 5px; background: var(--panel-2);
+  border-radius: 3px; font-family: ui-monospace, monospace;
+}
+
+/* ============================================================
+ * 顶栏（logo + 右侧动作）
+ * ============================================================ */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 22px;
+  position: sticky; top: 0; z-index: 10;
+}
+.topbar .logo {
+  font-size: 15px; font-weight: 700;
+  color: var(--text); letter-spacing: -.3px;
+}
+.topbar .logo .brand { color: var(--accent); }
+.topbar .nav { display: flex; align-items: center; gap: 4px; }
+.topbar .nav a, .topbar .nav button {
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 13px; font-weight: 500;
+  border: none; background: transparent;
+  color: var(--text-2);
+  transition: background .15s, color .15s;
+  text-decoration: none;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.topbar .nav a:hover { background: var(--accent-soft); color: var(--accent); }
+.topbar .nav button.primary { background: var(--accent); color: #fff; }
+.topbar .nav button.primary:hover { background: var(--theme-2); color: #fff; }
+.topbar .nav button:hover { background: var(--accent-soft); color: var(--accent); }
+
+/* 视图切换（文章 / 友情链接） */
+.view-switch {
+  display: inline-flex; gap: 2px;
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 3px;
+}
+.view-switch button {
+  padding: 6px 14px; border: none; background: transparent;
+  border-radius: 6px; font-size: 13px; font-weight: 500;
+  color: var(--text-2); transition: background .15s, color .15s;
+}
+.view-switch button:hover { color: var(--accent); }
+.view-switch button.active { background: var(--accent); color: #fff; }
+
+/* ============================================================
+ * 主布局（左侧文章列表 + 右侧编辑器）
+ * ============================================================ */
+.layout {
+  display: flex; gap: 18px;
+  padding: 18px 22px 32px;
+  max-width: 1400px; margin: 0 auto;
+}
+.side {
+  flex: 0 0 240px;
+  background: var(--panel);
+  border-radius: 12px;
+  padding: 16px 14px;
+  box-shadow: var(--shadow);
+  position: sticky; top: 70px;
+  align-self: flex-start;
+  max-height: calc(100vh - 90px);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.side h3 {
+  margin: 0 0 10px;
+  font-size: 13px; font-weight: 600;
+  color: var(--text);
+}
+.side .filter {
+  width: 100%; padding: 8px 12px;
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 7px; outline: none;
+  margin-bottom: 12px;
+  transition: border .15s;
+}
+.side .filter:focus { border-color: var(--accent); }
+
+.post-list {
+  list-style: none; margin: 0; padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+.post-list li {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 10px;
+  border-radius: 7px;
+  font-size: 13px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background .12s, color .12s;
+  margin-bottom: 2px;
+}
+.post-list li:hover { background: var(--accent-soft); color: var(--accent); }
+.post-list li.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.post-list li.dirty::after {
+  content: '●'; color: var(--danger);
+  margin-left: auto; font-size: 10px;
+}
+.post-list li .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text-3);
+  flex-shrink: 0;
+}
+.post-list li:hover .dot,
+.post-list li.active .dot { background: var(--accent); }
+.post-list li.empty {
+  display: block; text-align: center;
+  color: var(--text-3); font-size: 12px;
+  padding: 24px 8px; cursor: default;
+  font-style: italic;
+}
+.post-list li.empty:hover { background: transparent; color: var(--text-3); }
+.post-list li.del-btn {
+  color: var(--danger); justify-content: center;
+  font-size: 12px; margin-top: 8px;
+  border: 1px dashed var(--border);
+}
+.post-list li.del-btn:hover { background: rgba(231,76,60,.08); color: var(--danger); }
+
+/* ============================================================
+ * 编辑器主体
+ * ============================================================ */
+.editor {
+  flex: 1; min-width: 0;
+  background: var(--panel);
+  border-radius: 12px;
+  padding: 22px 26px 26px;
+  box-shadow: var(--shadow);
+}
+.big-title {
+  width: 100%;
+  font-size: 22px; font-weight: 700;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  outline: none;
+  transition: border .15s, background .15s;
+  margin-bottom: 18px;
+}
+.big-title:hover { border-color: var(--border); }
+.big-title:focus { border-color: var(--accent); background: var(--panel-2); }
+
+.meta {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 1.4fr 0.8fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.meta > div { display: flex; flex-direction: column; gap: 4px; }
+.meta label {
+  font-size: 11px; font-weight: 600;
+  color: var(--text-2);
+}
+.meta input {
+  padding: 8px 11px;
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 7px; outline: none;
+  transition: border .15s, background .15s;
+  font-size: 13px;
+  color: var(--text);
+}
+.meta input:focus { border-color: var(--accent); background: var(--panel); }
+
+.toolbar {
+  display: flex; align-items: center; gap: 4px;
+  padding: 8px 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+.toolbar button {
+  width: 32px; height: 32px;
+  border: 1px solid transparent; border-radius: 6px;
+  background: transparent; color: var(--text-2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  transition: background .12s, border .12s, color .12s;
+}
+.toolbar button:hover { background: var(--panel); border-color: var(--border); color: var(--accent); }
+.toolbar button b { font-weight: 700; }
+.toolbar button i { font-style: italic; font-family: serif; }
+.toolbar .sep { width: 1px; height: 18px; background: var(--border); margin: 0 4px; }
+
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.split > div {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex; flex-direction: column;
+  min-height: 420px;
+}
+.split h4 {
+  margin: 0; padding: 9px 14px;
+  font-size: 12px; font-weight: 600;
+  color: var(--text-2);
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  border-radius: 8px 8px 0 0;
+}
+
+.md-box {
+  flex: 1;
+  display: flex;
+  background: var(--panel);
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}
+.md-gutter {
+  flex: 0 0 44px;
+  padding: 14px 8px 14px 0;
+  text-align: right;
+  font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--text-3);
+  background: var(--panel-2);
+  border-right: 1px solid var(--border);
+  user-select: none;
+  white-space: pre;
+  overflow: hidden;
+}
+.md-area {
+  flex: 1;
+  border: none; outline: none; resize: none;
+  background: transparent;
+  padding: 14px 16px;
+  font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--text);
+  white-space: pre;
+  overflow: auto;
+}
+.prev {
+  flex: 1;
+  padding: 14px 18px;
+  background: var(--panel);
+  border-radius: 0 0 8px 8px;
+  overflow: auto;
+  line-height: 1.7;
+  color: var(--text);
+}
+.prev h1, .prev h2, .prev h3, .prev h4, .prev h5, .prev h6 {
+  margin: 1em 0 .6em; font-weight: 700;
+}
+.prev h1 { font-size: 1.5em; }
+.prev h2 { font-size: 1.3em; }
+.prev h3 { font-size: 1.15em; }
+.prev p { margin: .6em 0; }
+.prev ul, .prev ol { padding-left: 1.6em; margin: .6em 0; }
+.prev li { margin: .25em 0; }
+.prev blockquote {
+  margin: .8em 0;
+  padding: 8px 14px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--text-2);
+  border-radius: 0 6px 6px 0;
+}
+.prev code {
+  padding: 1px 6px;
+  background: var(--panel-2);
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .9em;
+}
+.prev pre {
+  background: var(--panel-2);
+  border-radius: 6px;
+  padding: 12px 14px;
+  overflow: auto;
+  margin: .8em 0;
+}
+.prev pre code {
+  background: transparent; padding: 0;
+}
+.prev hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1em 0;
+}
+.prev a { color: var(--accent); text-decoration: none; }
+.prev a:hover { text-decoration: underline; }
+.prev img { max-width: 100%; border-radius: 6px; }
+.prev .empty-hint {
+  color: var(--text-3);
+  font-style: italic;
+  font-size: 12px;
+  text-align: center;
+  margin-top: 30px;
+}
+
+/* ============================================================
+ * 模态：发布选项（复制 / 下载 / 写回）
+ * ============================================================ */
+.modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.4);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200;
+}
+.modal.hidden { display: none; }
+.modal-card {
+  width: 460px; max-width: calc(100vw - 32px);
+  background: var(--panel);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.15);
+}
+.modal-card h3 { margin: 0 0 12px; font-size: 16px; font-weight: 600; }
+.modal-card p { margin: 0 0 16px; color: var(--text-2); font-size: 13px; line-height: 1.6; }
+.modal-card textarea {
+  width: 100%; min-height: 220px; max-height: 320px;
+  padding: 12px; font: 12px/1.5 ui-monospace, monospace;
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 6px; outline: none;
+  resize: vertical;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+.modal-actions {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+.modal-actions button {
+  padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: 7px;
+  background: var(--panel); color: var(--text);
+  font-size: 12px; font-weight: 500;
+  transition: background .15s, border .15s, color .15s;
+}
+.modal-actions button:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.modal-actions button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.modal-actions button.primary:hover { background: var(--theme-2); color: #fff; border-color: var(--theme-2); }
+.modal-actions button.ghost {
+  grid-column: 1 / -1;
+  background: transparent;
+  color: var(--text-3);
+}
+.modal-actions button.ghost:hover { color: var(--text-2); border-color: var(--border); background: var(--panel-2); }
+
+/* ============================================================
+ * 通知 toast
+ * ============================================================ */
+.toast {
+  position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--text); color: var(--panel);
+  padding: 9px 18px; border-radius: 8px;
+  font-size: 13px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.15);
+  z-index: 300;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s, transform .2s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+
+/* ============================================================
+ * 数据源 / 修改密码 模态（复用 .modal/.modal-card 框架）
+ * ============================================================ */
+.src-tabs {
+  display: flex; gap: 6px; margin-bottom: 16px;
+}
+.src-tab {
+  flex: 1; padding: 8px 10px;
+  border: 1px solid var(--border); border-radius: 7px;
+  background: var(--panel); color: var(--text-2);
+  font-size: 13px; font-weight: 500;
+  transition: background .15s, border .15s, color .15s;
+}
+.src-tab.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.src-pane { display: none; }
+.src-pane.active { display: block; }
+.src-input {
+  width: 100%; padding: 9px 12px; margin-bottom: 8px;
+  border: 1px solid var(--border); border-radius: 7px;
+  background: var(--panel-2); color: var(--text);
+  font-size: 13px; outline: none;
+  transition: border .15s;
+}
+.src-input:focus { border-color: var(--accent); }
+.src-row { display: flex; gap: 8px; }
+.src-row .src-input { flex: 1; }
+.src-btn {
+  margin-top: 4px; padding: 9px 14px;
+  border: 1px solid var(--accent); border-radius: 7px;
+  background: var(--accent); color: #fff;
+  font-size: 13px; font-weight: 500;
+  transition: background .15s;
+}
+.src-btn:hover { background: var(--theme-2); }
+.src-btn.ghost { background: transparent; color: var(--text-2); border-color: var(--border); }
+.src-btn.ghost:hover { color: var(--text); background: var(--panel-2); }
+.src-msg { font-size: 12px; color: var(--text-3); margin-top: 8px; min-height: 16px; }
+.src-msg.ok { color: var(--success); }
+.src-msg.err { color: var(--danger); }
+.src-warn {
+  font-size: 12px; color: var(--text-2); line-height: 1.6;
+  margin-top: 10px; padding: 10px 12px;
+  background: var(--panel-2); border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.src-warn code { background: var(--bg); padding: 1px 4px; border-radius: 3px; }
+.src-status {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text-3); margin-left: 4px;
+}
+.src-status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-3); }
+.src-status.connected { color: var(--success); }
+.src-status.connected .dot { background: var(--success); }
+
+/* 修改密码表单 */
+.pw-form { display: flex; flex-direction: column; gap: 2px; }
+.pw-form .pw-row { display: flex; flex-direction: column; margin-bottom: 10px; }
+.pw-form label { font-size: 12px; color: var(--text-2); margin-bottom: 4px; }
+.pw-form input {
+  padding: 9px 12px; border: 1px solid var(--border); border-radius: 7px;
+  background: var(--panel-2); color: var(--text); font-size: 13px; outline: none;
+  transition: border .15s;
+}
+.pw-form input:focus { border-color: var(--accent); }
+.pw-err { color: var(--danger); font-size: 12px; min-height: 16px; margin: 2px 0 8px; }
+.pw-btns { display: flex; gap: 8px; justify-content: flex-end; }
+.pw-btns button { padding: 9px 16px; border-radius: 7px; font-size: 13px; font-weight: 500; }
+.pw-btns .ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border); }
+.pw-btns .ghost:hover { color: var(--text); background: var(--panel-2); }
+.pw-btns .primary { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+.pw-btns .primary:hover { background: var(--theme-2); }
+
+/* 发布模态：动作按钮自适应宽度 */
+.modal-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.modal-actions button { flex: 1 1 calc(50% - 4px); }
+.modal-actions button.ghost { flex-basis: 100%; }
+.modal-actions button:disabled { opacity: .45; cursor: not-allowed; }
+.modal-actions button:disabled:hover { background: var(--panel); border-color: var(--border); color: var(--text); }
+
+/* ============================================================
+ * 友情链接预览卡片
+ * ============================================================ */
+.friend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.friend-card {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.friend-card h4 { margin: 0 0 6px; font-size: 14px; font-weight: 600; }
+.friend-card h4 a { color: var(--accent); text-decoration: none; }
+.friend-card h4 a:hover { text-decoration: underline; }
+.friend-card p { margin: 0; font-size: 12px; color: var(--text-2); line-height: 1.5; }
+.friend-hint { color: var(--text-3); font-size: 12px; font-style: italic; padding: 8px 2px; }
+.friend-editor-label { font-size: 11px; font-weight: 600; color: var(--text-2); margin-bottom: 4px; display: block; }
+.friend-textarea {
+  width: 100%; min-height: 92px; padding: 8px 11px;
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 7px; outline: none; resize: vertical;
+  font: 13px/1.6 inherit; color: var(--text);
+  transition: border .15s, background .15s;
+}
+.friend-textarea:focus { border-color: var(--accent); background: var(--panel); }
+
+/* ============================================================
+ * 响应式（窄屏下堆叠）
+ * ============================================================ */
+@media (max-width: 960px) {
+  .layout { flex-direction: column; padding: 14px; }
+  .side { position: static; max-height: 220px; flex: none; }
+  .meta { grid-template-columns: repeat(2, 1fr); }
+  .split { grid-template-columns: 1fr; }
+  .topbar { padding: 10px 14px; }
+  .topbar .nav a, .topbar .nav button { padding: 6px 10px; font-size: 12px; }
+  .editor { padding: 18px 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     登录闸门
+     ============================================================ -->
+<div id="gate" class="gate">
+  <div class="gate-card">
+    <div class="logo">⋮⋮ 顶级索引</div>
+    <h2>文章后台登录</h2>
+    <input id="pwd" type="password" placeholder="请输入管理密码" autocomplete="current-password">
+    <button id="enterBtn">进入</button>
+    <p class="err" id="err"></p>
+    <p class="hint">默认密码 <code>admin</code>，首次登录请尽快修改</p>
+  </div>
+</div>
+
+<!-- ============================================================
+     应用主体（解锁前隐藏）
+     ============================================================ -->
+<div id="app" style="display:none">
+
+  <!-- 顶栏 -->
+  <header class="topbar">
+    <div class="logo"><span class="brand">⋮⋮ 顶级索引</span> / 内容后台</div>
+    <div class="view-switch">
+      <button id="viewPostsBtn" class="active" type="button">✍ 文章</button>
+      <button id="viewFriendsBtn" type="button">🔗 友情链接</button>
+    </div>
+    <nav class="nav">
+      <a href="javascript:;" id="quitBtn">退出</a>
+      <button id="srcBtn">⚙ 数据源</button>
+      <button id="pwBtn">修改密码</button>
+      <button id="newBtn">+ 新建</button>
+      <button id="draftBtn">保存草稿</button>
+      <button id="publishBtn" class="primary">发布</button>
+    </nav>
+  </header>
+
+  <!-- 文章视图：左文章列表 + 右编辑器 -->
+  <div id="postsView" class="layout">
+
+    <!-- 左侧 -->
+    <aside class="side">
+      <h3>文章列表</h3>
+      <input id="filter" class="filter" type="search" placeholder="搜索标题 / 文件名...">
+      <ul id="postList" class="post-list"></ul>
+    </aside>
+
+    <!-- 右侧编辑器 -->
+    <section class="editor">
+
+      <input id="eTitle" class="big-title" type="text" placeholder="在此输入文章大标题...">
+
+      <div class="meta">
+        <div><label>发布路径</label><input id="m_slug"     type="text" placeholder="hello-world"></div>
+        <div><label>标签</label>    <input id="m_tags"     type="text" placeholder="逗号分隔"></div>
+        <div><label>分类</label>    <input id="m_category" type="text" placeholder="教程"></div>
+        <div><label>封面</label>    <input id="m_cover"    type="text" placeholder="图片 URL"></div>
+        <div><label>日期</label>    <input id="m_date"     type="date"></div>
+      </div>
+
+      <div class="toolbar">
+        <button data-act="bold"     title="加粗"><b>B</b></button>
+        <button data-act="italic"   title="斜体"><i>I</i></button>
+        <button data-act="heading"  title="标题">H</button>
+        <span class="sep"></span>
+        <button data-act="link"     title="链接">🔗</button>
+        <button data-act="image"    title="图片">🖼</button>
+        <button data-act="quote"    title="引用">❝</button>
+        <button data-act="code"     title="行内代码">{}</button>
+        <span class="sep"></span>
+        <button data-act="ul"       title="无序列表">•</button>
+        <button data-act="ol"       title="有序列表">1.</button>
+        <span class="sep"></span>
+        <button data-act="hr"       title="分隔线">―</button>
+      </div>
+
+      <div class="split">
+        <div>
+          <h4>Markdown 正文（带行号）</h4>
+          <div class="md-box">
+            <div id="gutter" class="md-gutter"></div>
+            <textarea id="editor" class="md-area" spellcheck="false"></textarea>
+          </div>
+        </div>
+        <div>
+          <h4>实时预览</h4>
+          <div id="preview" class="prev"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 友情链接视图：左友链列表 + 右编辑器 -->
+  <div id="friendsView" class="layout" style="display:none">
+    <aside class="side">
+      <h3>友情链接</h3>
+      <input id="friendFilter" class="filter" type="search" placeholder="搜索名称 / 网址...">
+      <ul id="friendList" class="post-list"></ul>
+    </aside>
+
+    <section class="editor">
+      <input id="fName" class="big-title" type="text" placeholder="网站名称，如 简单导航">
+
+      <div class="meta">
+        <div style="grid-column:1 / -1;">
+          <label>网址</label>
+          <input id="fUrl" type="text" placeholder="https://example.com（站内链接可填 new.html）">
+        </div>
+      </div>
+
+      <div class="meta" style="grid-template-columns:1fr;">
+        <div>
+          <label>描述</label>
+          <textarea id="fDesc" class="friend-textarea" placeholder="一句话介绍这个站点，会显示在友链卡片里"></textarea>
+        </div>
+      </div>
+
+      <h4 style="margin:6px 0 10px;font-size:12px;font-weight:600;color:var(--text-2);">预览</h4>
+      <div id="friendPreview" class="friend-grid"></div>
+
+      <div style="margin-top:18px;">
+        <button id="newFriendBtn" class="src-btn" style="width:100%;">+ 新建友链</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ============================================================
+     发布结果模态
+     ============================================================ -->
+<div id="modal" class="modal hidden">
+  <div class="modal-card">
+    <h3 id="modalTitle">已生成发布数据</h3>
+    <p id="modalMsg"></p>
+    <textarea id="modalSnippet" readonly></textarea>
+    <div class="modal-actions">
+      <button id="copyBtn">📋 复制片段</button>
+      <button id="dlBtn">⬇ 下载 posts-data.js</button>
+      <button id="writeBtn">✏ 写回 posts-data.js</button>
+      <button id="ghPushBtn">🌐 发布到 GitHub</button>
+      <button id="cfPushBtn">☁ 发布到 Cloudflare</button>
+      <button class="ghost" id="closeModal">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- ============================================================
+     数据源模态（本机文件 / GitHub 仓库 / Cloudflare KV）
+     ============================================================ -->
+<div id="srcModal" class="modal hidden">
+  <div class="modal-card">
+    <h3>发布数据源 <span class="src-status" id="srcStatus"><span class="dot"></span><span id="srcStatusText">未连接</span></span></h3>
+    <p style="margin:0 0 12px;color:var(--text-2);font-size:13px;line-height:1.6;">选择文章「发布」时写回的目标。连接后会自动把线上已有的文章读入后台，避免覆盖。设置仅保存在本浏览器。</p>
+    <div class="src-tabs">
+      <button type="button" class="src-tab active" data-src="file">本机文件</button>
+      <button type="button" class="src-tab" data-src="github">GitHub 仓库</button>
+      <button type="button" class="src-tab" data-src="cloudflare">Cloudflare KV</button>
+    </div>
+
+    <!-- 本机文件 -->
+    <div class="src-pane active" data-pane="file">
+      <p style="margin:0 0 8px;color:var(--text-2);font-size:13px;line-height:1.6;">用浏览器直接读写本机 <code>posts-data.js</code>（仅 Chrome / Edge 支持 File System Access）。</p>
+      <button type="button" class="src-btn" id="pickFileBtn">选择本机 posts-data.js</button>
+      <div class="src-msg" id="fileMsg"></div>
+    </div>
+
+    <!-- GitHub -->
+    <div class="src-pane" data-pane="github">
+      <input id="ghToken" class="src-input" type="password" placeholder="GitHub Token（需 repo 权限）" autocomplete="off">
+      <input id="ghRepo" class="src-input" placeholder="仓库 owner/repo" autocomplete="off">
+      <div class="src-row">
+        <input id="ghBranch" class="src-input" placeholder="分支（默认 main）" value="main" autocomplete="off">
+        <input id="ghPath" class="src-input" placeholder="文件路径（默认 posts-data.js）" value="posts-data.js" autocomplete="off">
+      </div>
+      <button type="button" class="src-btn" id="ghConnect">连接并读取</button>
+      <div class="src-msg" id="ghMsg"></div>
+      <p class="src-warn">通过 GitHub Contents API 直接读写仓库文件（无需服务端）。Token 仅存于本浏览器 localStorage，请使用具备 <code>repo</code> 权限的 Token（Fine-grained 需 Contents 读写权限）。公开部署时请勿在公共电脑勾留此 Token。</p>
+    </div>
+
+    <!-- Cloudflare KV -->
+    <div class="src-pane" data-pane="cloudflare">
+      <input id="cfUrl" class="src-input" placeholder="数据 API 地址（如 https://blog-data.xxx.workers.dev）" autocomplete="off">
+      <input id="cfSecret" class="src-input" type="password" placeholder="管理员密钥（与 Worker 的 ADMIN_SECRET 一致）" autocomplete="off">
+      <input id="cfKey" class="src-input" placeholder="Key 名（默认 blog-posts）" value="blog-posts" autocomplete="off">
+      <button type="button" class="src-btn" id="cfConnect">连接并读取</button>
+      <div class="src-msg" id="cfMsg"></div>
+      <p class="src-warn">通过 Cloudflare Worker 直接读写 KV（无需 Git、无需服务端），适合直接上传部署的 Cloudflare Pages。需先在 Cloudflare 部署 <code>cloudflare/</code> 下的 Worker 并建好 KV 命名空间，且前台 <code>blog.html</code> 需设置 <code>POSTS_URL</code> 以从 KV 读取。地址与密钥仅存于本浏览器。</p>
+    </div>
+
+    <div class="modal-actions" style="margin-top:14px;">
+      <button class="ghost" id="closeSrc">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     修改密码模态
+     ============================================================ -->
+<div id="pwModal" class="modal hidden">
+  <div class="modal-card">
+    <h3>修改登录密码</h3>
+    <div class="pw-form">
+      <div class="pw-row">
+        <label for="pwOld">当前密码</label>
+        <input type="password" id="pwOld" autocomplete="current-password" placeholder="请输入当前密码">
+      </div>
+      <div class="pw-row">
+        <label for="pwNew">新密码（至少 6 位）</label>
+        <input type="password" id="pwNew" autocomplete="new-password" placeholder="请输入新密码">
+      </div>
+      <div class="pw-row">
+        <label for="pwNew2">确认新密码</label>
+        <input type="password" id="pwNew2" autocomplete="new-password" placeholder="再次输入新密码">
+      </div>
+      <div class="pw-err" id="pwErr"></div>
+      <div class="pw-btns">
+        <button type="button" class="ghost" id="pwCancel">取消</button>
+        <button type="button" class="primary" id="pwSubmit">确认修改</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+ * 默认文章数据（与 posts-data.js 中的 __POSTS__ 保持一致，作为初始数据源）
+ * 用户可以在 admin 中增删改后一键发布覆盖
+ * ============================================================ */
+var DEFAULT_POSTS = [
+  {
+    slug: 'hello',
+    title: '新的开始',
+    date: '2026-08-24',
+    tags: ['随记'],
+    category: '随记',
+    content: '这是我新建的**个人博客**。\n\n在这里我会分享一些学习过程中整理的笔记与心得。由于并非专业，内容只能尽力写好每一篇。\n\n> 一个人最好的生活状态，是有人爱时全力拥抱，没人爱时专注自己。\n\n本站采用与 432600.xyz 同源的卡片化视觉，浅色与深色主题均做了适配。'
+  },
+  {
+    slug: 'blog-howto',
+    title: '这个博客是怎么做出来的',
+    date: '2026-08-24',
+    tags: ['网站制作', '教程'],
+    category: '教程',
+    content: '这是一个**纯静态**博客，没有任何后端或构建工具，文章数据放在独立的 `posts-data.js` 文件里。\n\n## 核心思路\n\n1. 文章数据集中在独立的 `posts-data.js` 文件里的 `__POSTS__` 数组，改数据即改页面。\n2. 列表与详情都用哈希路由（`#/post/<slug>`）切换，单文件内完成。\n3. 视觉风格参考 Pure 主题的蓝色侧栏三栏布局，沿用同源导航网的卡片化细节。\n\n## 如何新增一篇文章\n\n只需在 `posts-data.js` 的 `__POSTS__` 数组里加一个对象：\n\n```js\n{\n  slug: "my-post",\n  title: "我的文章",\n  date: "2026-08-25",\n  tags: ["标签"],\n  content: "正文用 **Markdown** 写~"\n}\n```\n\n保存后用浏览器打开即可看到。'
+  },
+  {
+    slug: 'markdown-demo',
+    title: 'Markdown 语法速查',
+    date: '2026-08-24',
+    tags: ['教程'],
+    category: '教程',
+    content: '博客内置了一个轻量 Markdown 渲染器，支持以下常用语法：\n\n### 标题\n\n用 `#` 到 `######` 表示一至六级标题。\n\n### 强调\n\n- **加粗**：用 `**文字**`\n- *斜体*：用 `*文字*`\n- `行内代码`：用反引号包裹\n\n### 列表\n\n无序列表用 `-` 或 `*`：\n\n- 第一项\n- 第二项\n  - 嵌套项\n\n有序列表用数字：\n\n1. 第一步\n2. 第二步\n\n### 引用与链接\n\n> 引用一段文字，用 `>` 开头。\n\n访问 [简单导航](new.html) 看看同源风格的导航站。\n\n### 分割线\n\n---'
+  }
+];
+
+/* ============================================================
+ * SHA-256 客户端登录闸门（默认 admin，盐同 admin.html 一致）
+ * ============================================================ */
+var ADMIN_SALT = 'navsite-admin-v1';
+function sha256Hex(str) {
+  return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(function (buf) {
+    return Array.prototype.map.call(new Uint8Array(buf), function (b) {
+      return ('0' + b.toString(16)).slice(-2);
+    }).join('');
+  });
+}
+function expectedHash() {
+  var saved = null;
+  try { saved = localStorage.getItem('blogAdminPassHash'); } catch (e) {}
+  if (saved) return Promise.resolve(saved);
+  return sha256Hex(ADMIN_SALT + 'admin');
+}
+function verifyPassword(p) {
+  return Promise.all([sha256Hex(ADMIN_SALT + p), expectedHash()]).then(function (a) { return a[0] === a[1]; });
+}
+
+/* ============================================================
+ * 存储：localStorage 草稿与已发布数据
+ * ============================================================ */
+var LS_POSTS = 'blogAdmin.posts';
+var LS_DRAFTS = 'blogAdmin.drafts';
+function lsGet(k, fb) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch (e) { return fb; } }
+function lsSet(k, v)  { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+function loadPosts()   { return lsGet(LS_POSTS,  DEFAULT_POSTS.slice()); }
+function loadDrafts()   { return lsGet(LS_DRAFTS, []); }
+function savePosts(p)   { lsSet(LS_POSTS, p); }
+function saveDrafts(d)  { lsSet(LS_DRAFTS, d); }
+
+/* ============================================================
+ * 状态
+ * ============================================================ */
+var posts   = loadPosts();    /* 已发布文章 */
+var drafts  = loadDrafts();   /* 未发布的草稿 */
+var dirtySet = {};            /* 已修改标记（按 slug/title） */
+var currentDraftIdx = -1;     /* 当前选中在草稿/已发布列表里的位置 */
+var currentSource   = 'posts'; /* 'posts' | 'drafts' */
+var filter = '';
+
+/* DOM */
+var $ = function (id) { return document.getElementById(id); };
+
+/* ============================================================
+ * 极简 Markdown 预览（与 blog.html 同步）
+ * ============================================================ */
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function inlineMd(s) {
+  s = s.replace(/`([^`]+)`/g, function (_, c) { return '<code>' + escapeHtml(c) + '</code>'; });
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, function (_, a, u) { return '<img src="' + u + '" alt="' + a + '" />'; });
+  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function (_, t, u) { return '<a href="' + u + '" target="_blank" rel="noopener">' + t + '</a>'; });
+  return s;
+}
+function renderMarkdown(md) {
+  var lines = md.replace(/\r\n/g, '\n').split('\n');
+  var out = [], i = 0;
+  var RE_BLOCK = /^(#{1,6}\s|```|>\s?|[-*]\s|\d+\.\s|-{3,}|\*{3,})/;
+  while (i < lines.length) {
+    var line = lines[i];
+    if (!line.trim()) { i++; continue; }
+    if (/^```/.test(line)) {
+      var code = []; i++;
+      while (i < lines.length && !/^```/.test(lines[i])) { code.push(lines[i]); i++; }
+      i++;
+      out.push('<pre><code>' + escapeHtml(code.join('\n')) + '</code></pre>');
+      continue;
+    }
+    var hm = /^(#{1,6})\s+(.*)$/.exec(line);
+    if (hm) { out.push('<h' + hm[1].length + '>' + inlineMd(escapeHtml(hm[2])) + '</h' + hm[1].length + '>'); i++; continue; }
+    if (/^>\s?/.test(line)) {
+      var q = []; while (i < lines.length && /^>\s?/.test(lines[i])) { q.push(lines[i].replace(/^>\s?/, '')); i++; }
+      out.push('<blockquote>' + inlineMd(escapeHtml(q.join('\n'))) + '</blockquote>');
+      continue;
+    }
+    if (/^(-{3,}|\*{3,})$/.test(line.trim())) { out.push('<hr>'); i++; continue; }
+    if (/^[-*]\s/.test(line)) {
+      var u = []; while (i < lines.length && /^[-*]\s/.test(lines[i])) { u.push(lines[i].replace(/^[-*]\s/, '')); i++; }
+      out.push('<ul>' + u.map(function (x) { return '<li>' + inlineMd(escapeHtml(x)) + '</li>'; }).join('') + '</ul>');
+      continue;
+    }
+    if (/^\d+\.\s/.test(line)) {
+      var o = []; while (i < lines.length && /^\d+\.\s/.test(lines[i])) { o.push(lines[i].replace(/^\d+\.\s/, '')); i++; }
+      out.push('<ol>' + o.map(function (x) { return '<li>' + inlineMd(escapeHtml(x)) + '</li>'; }).join('') + '</ol>');
+      continue;
+    }
+    var p = []; while (i < lines.length && lines[i].trim() && !RE_BLOCK.test(lines[i])) { p.push(lines[i]); i++; }
+    out.push('<p>' + inlineMd(escapeHtml(p.join(' '))) + '</p>');
+  }
+  return out.join('\n');
+}
+
+/* ============================================================
+ * 工具函数
+ * ============================================================ */
+function todayISO() {
+  var d = new Date();
+  var z = function (n) { return n < 10 ? '0' + n : '' + n; };
+  return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate());
+}
+function slugify(s) {
+  return (s || '').trim().toLowerCase()
+    .replace(/[\s\u3000]+/g, '-')
+    .replace(/[^\w\u4e00-\u9fa5-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 60) || 'untitled-' + Date.now().toString(36);
+}
+function toast(msg, ms) {
+  var t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._h);
+  toast._h = setTimeout(function () { t.classList.remove('show'); }, ms || 1800);
+}
+
+/* ============================================================
+ * 列表：合并「已发布」与「草稿」两个数组
+ * ============================================================ */
+function mergedList() {
+  var list = [];
+  posts.forEach(function (p, i) { list.push({ source: 'posts',  idx: i, key: 'p:' + p.slug + ':' + i, data: p }); });
+  drafts.forEach(function (d, i) { list.push({ source: 'drafts', idx: i, key: 'd:' + i, data: d }); });
+  return list;
+}
+
+function renderPostList() {
+  var list = mergedList();
+  if (filter) {
+    var f = filter.toLowerCase();
+    list = list.filter(function (it) {
+      return (it.data.title || '').toLowerCase().indexOf(f) >= 0
+          || (it.data.slug  || '').toLowerCase().indexOf(f) >= 0;
+    });
+  }
+  var ul = $('postList');
+  ul.innerHTML = '';
+  if (!list.length) {
+    var li = document.createElement('li');
+    li.className = 'empty';
+    li.textContent = posts.length + drafts.length ? '没有匹配的文章' : '还没有文章，点右上角「+ 新建」开始写吧';
+    ul.appendChild(li);
+    return;
+  }
+  list.forEach(function (it) {
+    var li = document.createElement('li');
+    li.dataset.key = it.key;
+    if (it.source === 'drafts') {
+      li.classList.add('dirty');
+      li.title = '草稿（未发布）';
+    }
+    if (currentSource === it.source && currentDraftIdx === it.idx) li.classList.add('active');
+
+    var dot = document.createElement('span'); dot.className = 'dot';
+    var tx  = document.createElement('span');
+    tx.textContent = (it.data.title || '(无标题)') + (it.source === 'drafts' ? '  草稿' : '');
+    li.appendChild(dot); li.appendChild(tx);
+
+    li.addEventListener('click', function (e) {
+      if (e.target.classList.contains('del-x')) return;
+      loadIntoEditor(it.source, it.idx);
+    });
+
+    /* 删除按钮：drafts 永远可删；posts 也允许（生成发布后会移出） */
+    var x = document.createElement('span');
+    x.className = 'del-x';
+    x.textContent = '×';
+    x.title = '从列表中移除（已发布的不会写回 posts-data.js 直到你点「发布」）';
+    x.style.cssText = 'margin-left:auto;color:var(--text-3);font-size:14px;padding:0 4px;cursor:pointer;border-radius:4px;';
+    x.addEventListener('mouseenter', function () { x.style.color = 'var(--danger)'; });
+    x.addEventListener('mouseleave', function () { x.style.color = 'var(--text-3)'; });
+    x.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      if (!confirm('确认要从后台列表移除：' + (it.data.title || '(无标题)') + '？\n（已发布文章需要点「发布」才会写回 posts-data.js）')) return;
+      if (it.source === 'posts') {
+        posts.splice(it.idx, 1); savePosts(posts);
+      } else {
+        drafts.splice(it.idx, 1); saveDrafts(drafts);
+      }
+      if (currentSource === it.source && currentDraftIdx === it.idx) clearEditor();
+      renderPostList();
+      toast('已移除');
+    });
+    li.appendChild(x);
+
+    ul.appendChild(li);
+  });
+}
+
+/* ============================================================
+ * 编辑器：从列表载入 / 写入表单
+ * ============================================================ */
+function loadIntoEditor(source, idx) {
+  var arr = source === 'posts' ? posts : drafts;
+  var p = arr[idx];
+  if (!p) return;
+  currentSource = source;
+  currentDraftIdx = idx;
+  $('eTitle').value    = p.title || '';
+  $('m_slug').value    = p.slug  || '';
+  $('m_tags').value    = (p.tags || []).join(', ');
+  $('m_category').value= p.category || '';
+  $('m_cover').value   = p.cover || '';
+  $('m_date').value    = p.date  || todayISO();
+  $('editor').value    = p.content || '';
+  updateGutter(); updatePreview();
+  renderPostList();
+  $('eTitle').focus();
+}
+
+function clearEditor() {
+  currentSource = 'posts';
+  currentDraftIdx = -1;
+  $('eTitle').value = '';
+  $('m_slug').value = '';
+  $('m_tags').value = '';
+  $('m_category').value = '';
+  $('m_cover').value = '';
+  $('m_date').value = todayISO();
+  $('editor').value = '';
+  updateGutter(); updatePreview();
+  renderPostList();
+}
+
+function readEditor() {
+  return {
+    title:    $('eTitle').value.trim(),
+    slug:     ($('m_slug').value || slugify($('eTitle').value)).trim(),
+    date:     $('m_date').value || todayISO(),
+    tags:     $('m_tags').value.split(/[,，]/).map(function (s) { return s.trim(); }).filter(Boolean),
+    category: $('m_category').value.trim() || ($('m_tags').value.split(/[,，]/)[0] || '').trim() || '未分类',
+    cover:    $('m_cover').value.trim(),
+    content:  $('editor').value
+  };
+}
+
+/* ============================================================
+ * 工具栏：包裹选区
+ * ============================================================ */
+function wrapSel(before, after, placeholder) {
+  var ta = $('editor');
+  ta.focus();
+  var start = ta.selectionStart, end = ta.selectionEnd;
+  if (start === end) {
+    /* 无选区：在光标处插入占位 */
+    var ins = (before + (placeholder || '') + after);
+    ta.value = ta.value.slice(0, start) + ins + ta.value.slice(end);
+    ta.selectionStart = start + before.length;
+    ta.selectionEnd = ta.selectionStart + (placeholder || '').length;
+  } else {
+    var sel = ta.value.slice(start, end);
+    var ins = before + sel + after;
+    ta.value = ta.value.slice(0, start) + ins + ta.value.slice(end);
+    ta.selectionStart = start + before.length;
+    ta.selectionEnd = ta.selectionStart + sel.length;
+  }
+  updateGutter(); updatePreview();
+}
+function lineOp(prefix, placeholder) {
+  var ta = $('editor');
+  ta.focus();
+  var start = ta.selectionStart;
+  var before = ta.value.slice(0, start);
+  var lineStart = before.lastIndexOf('\n') + 1;
+  var rest = ta.value.slice(lineStart);
+  var ins = prefix + (placeholder || '');
+  ta.value = ta.value.slice(0, lineStart) + ins + rest;
+  ta.selectionStart = ta.selectionEnd = lineStart + ins.length;
+  updateGutter(); updatePreview();
+}
+function insertBlock(text) {
+  var ta = $('editor');
+  ta.focus();
+  var start = ta.selectionStart;
+  var before = ta.value.slice(0, start);
+  var prefix = before.length && before.charAt(before.length - 1) !== '\n' ? '\n\n' : '';
+  var ins = prefix + text + '\n';
+  ta.value = ta.value.slice(0, start) + ins + ta.value.slice(start);
+  ta.selectionStart = ta.selectionEnd = start + ins.length;
+  updateGutter(); updatePreview();
+}
+
+/* ============================================================
+ * 行号 + 预览
+ * ============================================================ */
+function updateGutter() {
+  var v = $('editor').value;
+  var n = v.split('\n').length;
+  var g = $('gutter');
+  g.textContent = Array.from({ length: n }, function (_, i) { return i + 1; }).join('\n');
+}
+function updatePreview() {
+  var md = $('editor').value;
+  var p = $('preview');
+  if (!md.trim()) { p.innerHTML = '<div class="empty-hint">在左侧编辑 Markdown，此处实时预览渲染效果</div>'; return; }
+  p.innerHTML = renderMarkdown(md);
+}
+
+/* ============================================================
+ * 友情链接：默认数据 / 状态 / 列表 / 编辑器
+ * （与文章并列，统一管理 posts-data.js 的两个数据块）
+ * ============================================================ */
+var DEFAULT_FRIENDS = [
+  { name: '简单导航', url: 'new.html', desc: '本人维护的导航站，收录常用的网站与工具。' },
+  { name: '432600.xyz', url: 'https://432600.xyz/', desc: '博客与导航站视觉风格的参考来源站。' },
+  { name: '百度', url: 'https://www.baidu.com', desc: '搜索引擎（占位示例，可替换为自己常逛的站）。' }
+];
+var LS_FRIENDS = 'blogAdmin.friends';
+var friends = lsGet(LS_FRIENDS, DEFAULT_FRIENDS.slice());
+var friendFilter = '';
+var currentFriendIdx = -1;          /* 当前选中的友链在 friends 数组中的位置，-1 表示新建 */
+var currentView = 'posts';          /* 'posts' | 'friends' */
+var publishTarget = 'posts';        /* 发布模态当前针对的数据：posts | friends */
+
+function saveFriends(f) { friends = f || friends; lsSet(LS_FRIENDS, friends); }
+
+function renderFriendList() {
+  var list = friends.slice();
+  if (friendFilter) {
+    var f = friendFilter.toLowerCase();
+    list = list.filter(function (it) {
+      return (it.name || '').toLowerCase().indexOf(f) >= 0
+          || (it.url  || '').toLowerCase().indexOf(f) >= 0;
+    });
+  }
+  var ul = $('friendList');
+  ul.innerHTML = '';
+  if (!list.length) {
+    var li = document.createElement('li');
+    li.className = 'empty';
+    li.textContent = friends.length ? '没有匹配的友链' : '还没有友链，点「+ 新建友链」添加';
+    ul.appendChild(li);
+    return;
+  }
+  list.forEach(function (it) {
+    var idx = friends.indexOf(it);
+    var li = document.createElement('li');
+    li.dataset.idx = idx;
+    if (currentFriendIdx === idx) li.classList.add('active');
+
+    var dot = document.createElement('span'); dot.className = 'dot';
+    var tx  = document.createElement('span');
+    tx.innerHTML = escapeHtml(it.name || '(未命名)')
+                + '<br><small style="color:var(--text-3)">' + escapeHtml(it.url || '') + '</small>';
+    li.appendChild(dot); li.appendChild(tx);
+
+    li.addEventListener('click', function () { loadFriendIntoEditor(idx); });
+
+    var x = document.createElement('span');
+    x.className = 'del-x';
+    x.textContent = '×';
+    x.title = '删除该友链';
+    x.style.cssText = 'margin-left:auto;color:var(--text-3);font-size:14px;padding:0 4px;cursor:pointer;border-radius:4px;';
+    x.addEventListener('mouseenter', function () { x.style.color = 'var(--danger)'; });
+    x.addEventListener('mouseleave', function () { x.style.color = 'var(--text-3)'; });
+    x.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      if (!confirm('确认删除友链：' + (it.name || '') + '？')) return;
+      friends.splice(idx, 1); saveFriends();
+      if (currentFriendIdx === idx) clearFriendEditor();
+      renderFriendList();
+      toast('已删除');
+    });
+
+    li.appendChild(x);
+    ul.appendChild(li);
+  });
+}
+
+function loadFriendIntoEditor(idx) {
+  var f = friends[idx];
+  if (!f) return;
+  currentFriendIdx = idx;
+  $('fName').value = f.name || '';
+  $('fUrl').value  = f.url  || '';
+  $('fDesc').value = f.desc || '';
+  renderFriendPreview(); renderFriendList();
+  $('fName').focus();
+}
+
+function clearFriendEditor() {
+  currentFriendIdx = -1;
+  $('fName').value = '';
+  $('fUrl').value  = '';
+  $('fDesc').value = '';
+  renderFriendPreview(); renderFriendList();
+}
+
+function readFriend() {
+  return {
+    name: $('fName').value.trim(),
+    url:  $('fUrl').value.trim(),
+    desc: $('fDesc').value.trim()
+  };
+}
+
+function renderFriendPreview() {
+  var f = readFriend();
+  var pv = $('friendPreview');
+  if (!f.name && !f.url && !f.desc) {
+    pv.innerHTML = '<p class="friend-hint">填写左侧表单，这里实时预览友情链接卡片</p>';
+    return;
+  }
+  var isLocal = f.url.length > 0 && f.url.indexOf('http') !== 0;
+  var attrs = isLocal ? '' : ' target="_blank" rel="noopener"';
+  var u = f.url || '#';
+  pv.innerHTML = '<div class="friend-card">'
+    + '<h4 class="fname"><a href="' + escapeHtml(u) + '"' + attrs + '>' + escapeHtml(f.name || '(未命名)') + '</a></h4>'
+    + '<p class="fdesc">' + escapeHtml(f.desc || '') + '</p>'
+    + '</div>';
+}
+
+function saveFriendLocal() {
+  var f = readFriend();
+  if (!f.name) { toast('请填写网站名称'); $('fName').focus(); return; }
+  if (currentFriendIdx >= 0) friends[currentFriendIdx] = f;
+  else friends.unshift(f);
+  saveFriends();
+  currentFriendIdx = friends.indexOf(f);
+  renderFriendList();
+  toast('友链已保存');
+}
+
+function publishFriends() {
+  var f = readFriend();
+  if (!f.name) { toast('请先填写网站名称'); $('fName').focus(); return; }
+  if (currentFriendIdx >= 0) {
+    friends[currentFriendIdx] = f;
+  } else {
+    var exist = -1;
+    for (var i = 0; i < friends.length; i++) { if (friends[i].name === f.name) { exist = i; break; } }
+    if (exist >= 0) friends[exist] = f;
+    else friends.unshift(f);
+  }
+  saveFriends();
+  currentFriendIdx = friends.indexOf(f);
+  renderFriendList();
+  openPublishModal('friends');
+}
+
+/* 视图切换：文章 / 友情链接 */
+function setView(v) {
+  currentView = v;
+  $('postsView').style.display   = (v === 'friends') ? 'none' : '';
+  $('friendsView').style.display = (v === 'friends') ? '' : 'none';
+  $('viewPostsBtn').classList.toggle('active', v === 'posts');
+  $('viewFriendsBtn').classList.toggle('active', v === 'friends');
+  /* 顶栏按钮随视图切换文案 */
+  $('newBtn').textContent   = (v === 'friends') ? '+ 新建友链' : '+ 新建';
+  $('draftBtn').textContent = (v === 'friends') ? '保存' : '保存草稿';
+  $('publishBtn').textContent = (v === 'friends') ? '发布友链' : '发布';
+}
+
+/* ============================================================
+ * 保存草稿 / 发布
+ * ============================================================ */
+function saveDraft() {
+  var data = readEditor();
+  if (!data.title) { toast('请先填写标题'); $('eTitle').focus(); return; }
+  var existingKey = data.slug || slugify(data.title);
+
+  if (currentSource === 'drafts' && currentDraftIdx >= 0) {
+    drafts[currentDraftIdx] = data;
+  } else {
+    drafts.unshift(data);
+  }
+  saveDrafts(drafts);
+  toast('草稿已保存');
+  /* 切到 drafts 视图，定位到该草稿 */
+  currentSource = 'drafts';
+  currentDraftIdx = drafts.indexOf(data);
+  renderPostList();
+  updateGutter(); updatePreview();
+}
+
+function generatePostsSnippet() {
+  /* JSON.stringify + 简单美化，键用双引号，可直接贴回 posts-data.js */
+  var arr = posts.length ? posts : DEFAULT_POSTS;
+  var body = arr.map(function (p) {
+    var ts = (p.tags || []).map(function (t) { return JSON.stringify(t); }).join(', ');
+    return '      {\n'
+         + '        slug: ' + JSON.stringify(p.slug || '') + ',\n'
+         + '        title: ' + JSON.stringify(p.title || '') + ',\n'
+         + '        date: ' + JSON.stringify(p.date || todayISO()) + ',\n'
+         + '        tags: [' + ts + '],\n'
+         + '        category: ' + JSON.stringify(p.category || '') + ',\n'
+         + (p.cover ? '        cover: ' + JSON.stringify(p.cover) + ',\n' : '')
+         + '        content: ' + JSON.stringify(p.content || '') + '\n'
+         + '      }';
+  }).join(',\n');
+
+  return 'window.__POSTS__ = [\n' + body + '\n];';
+}
+
+/* 友情链接数据块：var FRIENDS = [...] */
+function generateFriendsSnippet() {
+  var arr = friends.length ? friends : DEFAULT_FRIENDS;
+  var body = arr.map(function (f) {
+    return '      { name: ' + JSON.stringify(f.name || '') + ', url: ' + JSON.stringify(f.url || '') + ', desc: ' + JSON.stringify(f.desc || '') + ' }';
+  }).join(',\n');
+  return 'var FRIENDS = [\n' + body + '\n    ];';
+}
+
+/* 完整数据文件（文章 + 友情链接），用于下载 / 写回 / GitHub PUT */
+function buildDataFile() {
+  return '/* ============================================================\n'
+       + ' * 博客数据（由 blog-admin.html 导出：文章 + 友情链接）\n'
+       + ' * 前台 blog.html 通过  <script src="posts-data.js"><\/script>  加载本文件。\n'
+       + ' * 增删文章 / 友链只需修改对应数组，页面体积不再随内容增长。\n'
+       + ' * ============================================================ */\n'
+       + generatePostsSnippet() + '\n\n'
+       + '/* ============================================================\n'
+       + ' * 友情链接数据：新增友链只需往 FRIENDS 数组加一个对象即可\n'
+       + ' * ============================================================ */\n'
+       + generateFriendsSnippet() + '\n';
+}
+
+/* 从源文件（本机 / GitHub 的 posts-data.js）替换两个数据块，保留其余内容 */
+function buildFullSource(raw) {
+  if (!raw) return buildDataFile();
+  var s = replaceTopLevelPosts(raw, generatePostsSnippet());
+  s = replaceTopLevelFriends(s, generateFriendsSnippet());
+  return s;
+}
+
+/* 发布模态：根据当前视图展示完整数据文件，并提示发布目标 */
+function openPublishModal(kind) {
+  publishTarget = kind;
+  $('modalSnippet').value = buildDataFile();
+  var srcName = dataSource === 'github' ? 'GitHub 仓库' : dataSource === 'cloudflare' ? 'Cloudflare KV' : '本机文件';
+  if (kind === 'friends') {
+    $('modalTitle').textContent = '✓ 友情链接已发布到本地列表';
+    $('modalMsg').innerHTML = '已合并 <b>' + friends.length + '</b> 条友情链接到本地列表（当前发布目标：<b>' + srcName + '</b>）。<br>'
+      + '选择一种方式把数据落到数据文件 <code>posts-data.js</code>：';
+  } else {
+    $('modalTitle').textContent = '✓ 已发布到本地列表';
+    $('modalMsg').innerHTML = '已合并 <b>' + posts.length + '</b> 篇文章到本地列表（当前发布目标：<b>' + srcName + '</b>）。<br>'
+      + '选择一种方式把数据落到数据文件 <code>posts-data.js</code>（友情链接会一并写入）：';
+  }
+  refreshPublishButtons();
+  $('modal').classList.remove('hidden');
+}
+
+function publish() {
+  var data = readEditor();
+  if (!data.title) { toast('请先填写标题'); $('eTitle').focus(); return; }
+  if (!data.slug)  data.slug = slugify(data.title);
+
+  /* 先把当前编辑数据合并到已发布列表 */
+  if (currentSource === 'posts' && currentDraftIdx >= 0) {
+    posts[currentDraftIdx] = data;
+  } else {
+    /* 来自 drafts 或新建：先按 slug 查重，若已存在则覆盖 */
+    var exist = -1;
+    for (var i = 0; i < posts.length; i++) { if (posts[i].slug === data.slug) { exist = i; break; } }
+    if (exist >= 0) posts[exist] = data;
+    else posts.unshift(data);
+  }
+  /* 草稿里如果存在同 slug 也清掉 */
+  drafts = drafts.filter(function (d) { return d.slug !== data.slug; });
+  savePosts(posts);
+  saveDrafts(drafts);
+
+  currentSource = 'posts';
+  currentDraftIdx = posts.indexOf(data);
+  renderPostList();
+
+  /* 弹窗：让用户选择如何落到数据文件 posts-data.js（文章 + 友情链接） */
+  openPublishModal('posts');
+}
+
+/* ============================================================
+ * 模态行为：复制 / 下载 / 写回文件
+ * ============================================================ */
+$('copyBtn').addEventListener('click', function () {
+  var txt = $('modalSnippet').value;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt).then(function () { toast('已复制到剪贴板'); });
+  } else {
+    var ta = $('modalSnippet'); ta.select(); document.execCommand('copy'); toast('已复制');
+  }
+});
+
+$('dlBtn').addEventListener('click', function () {
+  /* 下载 posts-data.js（含文章 + 友情链接，可直接放到博客目录覆盖同名文件） */
+  var snippet = $('modalSnippet').value;
+  var blob = new Blob([snippet], { type: 'text/javascript;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'posts-data.js'; a.click();
+  URL.revokeObjectURL(url);
+  toast('已下载 posts-data.js');
+});
+
+$('writeBtn').addEventListener('click', async function () {
+  if (!window.showOpenFilePicker) {
+    toast('当前浏览器不支持直接写文件，可改用「复制片段」或「下载」');
+    return;
+  }
+  try {
+    /* 让用户挑选 posts-data.js（写权限） */
+    var [handle] = await window.showOpenFilePicker({
+      types: [{ description: '数据文件', accept: { 'text/javascript': ['.js'], 'text/html': ['.html'] } }],
+      excludeAcceptAllOption: false,
+      multiple: false
+    });
+    await ensurePermission(handle, 'readwrite');
+    var orig = await handle.getFile();
+    var text = await orig.text();
+
+    /* 替换源文件中 __POSTS__ 与 FRIENDS 两个数据块（其余内容保留） */
+    var next = buildFullSource(text);
+
+    var writable = await handle.createWritable();
+    await writable.write(next);
+    await writable.close();
+    toast('✓ 已写回 posts-data.js');
+  } catch (e) {
+    if (e && e.name !== 'AbortError') toast('写入失败：' + (e.message || e.name));
+  }
+});
+
+function replaceTopLevelPosts(text, snippet) {
+  /* 找到 window.__POSTS__ = [ 的起始，向后扫描括号深度，遇到顶层 ; 时结束 */
+  var idx = text.indexOf('window.__POSTS__');
+  if (idx < 0) return text;
+  var lb = text.indexOf('[', idx);
+  if (lb < 0) return text;
+  var depth = 0, i = lb;
+  for (; i < text.length; i++) {
+    var ch = text.charAt(i);
+    if (ch === '[') depth++;
+    else if (ch === ']') { depth--; if (depth === 0) { i++; break; } }
+  }
+  /* i 指向 ] 之后，吞掉 ; 与空白 */
+  while (i < text.length && /[\s;]/.test(text.charAt(i))) i++;
+  return text.slice(0, idx) + snippet + text.slice(i);
+}
+
+/* 替换源文件中的 var FRIENDS = [ ... ] 块（按括号深度配对，找不到则注入） */
+function replaceTopLevelFriends(text, snippet) {
+  var idx = text.indexOf('var FRIENDS');
+  if (idx < 0) {
+    /* 源文件没有 FRIENDS 块：注入到 </body> 前或文件末尾 */
+    if (/<\/body>/i.test(text)) {
+      return text.replace(/<\/body>/i, '\n<scr' + 'ipt>\n' + snippet + '\n</scr' + 'ipt>\n</body>');
+    }
+    return text + '\n' + snippet + '\n';
+  }
+  var lb = text.indexOf('[', idx);
+  if (lb < 0) return text;
+  var depth = 0, i = lb;
+  for (; i < text.length; i++) {
+    var ch = text.charAt(i);
+    if (ch === '[') depth++;
+    else if (ch === ']') { depth--; if (depth === 0) { i++; break; } }
+  }
+  while (i < text.length && /[\s;]/.test(text.charAt(i))) i++;
+  return text.slice(0, idx) + snippet + text.slice(i);
+}
+
+/* 从 posts-data.js 提取顶层 var FRIENDS = [ ... ] 的代码段 */
+function extractFriendsSegment(text) {
+  var start = text.indexOf('var FRIENDS');
+  if (start < 0) return null;
+  var lb = text.indexOf('[', start);
+  if (lb < 0) return null;
+  var depth = 0, i = lb;
+  for (; i < text.length; i++) {
+    var ch = text.charAt(i);
+    if (ch === '[') depth++;
+    else if (ch === ']') { depth--; if (depth === 0) { i++; break; } }
+  }
+  return text.slice(lb, i);
+}
+/* 把提取出的 JS 字面量安全求值成数组（用于解析仓库/本机文件里的 FRIENDS） */
+function parseFriendsFromHtml(text) {
+  var seg = extractFriendsSegment(text);
+  if (!seg) return null;
+  try { return (new Function('return (' + seg + ');'))(); }
+  catch (e) { return null; }
+}
+
+async function ensurePermission(handle, mode) {
+  if (!handle.queryPermission) return true;
+  var s = await handle.queryPermission({ mode: mode });
+  if (s === 'granted') return true;
+  if (s === 'prompt' && handle.requestPermission) {
+    var s2 = await handle.requestPermission({ mode: mode });
+    return s2 === 'granted';
+  }
+  return false;
+}
+
+$('closeModal').addEventListener('click', function () {
+  $('modal').classList.add('hidden');
+});
+
+/* ============================================================
+ * 绑定：新建 / 草稿 / 发布 / 退出 / 过滤 / 编辑器 / 工具栏
+ * ============================================================ */
+$('newBtn').addEventListener('click', function () {
+  if (currentView === 'friends') { clearFriendEditor(); $('fName').focus(); }
+  else { clearEditor(); $('eTitle').focus(); }
+});
+$('draftBtn').addEventListener('click', function () {
+  if (currentView === 'friends') saveFriendLocal(); else saveDraft();
+});
+$('publishBtn').addEventListener('click', function () {
+  if (currentView === 'friends') publishFriends(); else publish();
+});
+
+/* 视图切换：文章 / 友情链接 */
+$('viewPostsBtn').addEventListener('click', function () { setView('posts'); });
+$('viewFriendsBtn').addEventListener('click', function () { setView('friends'); });
+
+/* 友情链接：新建 / 过滤 / 实时预览 */
+$('newFriendBtn').addEventListener('click', function () { clearFriendEditor(); $('fName').focus(); });
+$('friendFilter').addEventListener('input', function () { friendFilter = $('friendFilter').value; renderFriendList(); });
+$('fName').addEventListener('input', renderFriendPreview);
+$('fUrl').addEventListener('input', renderFriendPreview);
+$('fDesc').addEventListener('input', renderFriendPreview);
+$('quitBtn').addEventListener('click', function () {
+  if (confirm('退出后台？未发布的草稿会保留在 localStorage。')) {
+    $('app').style.display = 'none';
+    $('gate').classList.remove('hidden');
+    $('pwd').value = ''; $('pwd').focus(); $('err').textContent = '';
+  }
+});
+
+$('filter').addEventListener('input', function () {
+  filter = $('filter').value;
+  renderPostList();
+});
+
+$('editor').addEventListener('input',  function () { updateGutter(); updatePreview(); });
+$('editor').addEventListener('scroll', function () {
+  $('gutter').scrollTop = $('editor').scrollTop;
+});
+
+document.querySelectorAll('.toolbar button').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var a = btn.dataset.act;
+    if (a === 'bold')    wrapSel('**', '**', '加粗');
+    else if (a === 'italic')  wrapSel('*', '*', '斜体');
+    else if (a === 'heading') lineOp('## ', '标题');
+    else if (a === 'link') {
+      var url = prompt('链接地址：', 'https://'); if (url) wrapSel('[', '](' + url + ')', '文字');
+    }
+    else if (a === 'image') {
+      var u = prompt('图片地址：', 'https://'); if (u) wrapSel('![', '](' + u + ')', '描述');
+    }
+    else if (a === 'quote')   lineOp('> ', '引用');
+    else if (a === 'code')    wrapSel('`', '`', 'code');
+    else if (a === 'ul')      lineOp('- ', '项');
+    else if (a === 'ol')      lineOp('1. ', '项');
+    else if (a === 'hr')      insertBlock('---');
+  });
+});
+
+/* ============================================================
+ * 标题实时同步 slug（仅当用户未手动改过 slug）
+ * ============================================================ */
+var slugTouched = false;
+$('m_slug').addEventListener('input', function () { slugTouched = true; });
+$('eTitle').addEventListener('input', function () {
+  if (!slugTouched) $('m_slug').value = slugify($('eTitle').value);
+});
+
+/* ============================================================
+ * 登录
+ * ============================================================ */
+function doEnter() {
+  var p = $('pwd').value;
+  if (!p) { $('err').textContent = '请输入密码'; return; }
+  verifyPassword(p).then(function (ok) {
+    if (ok) {
+      $('err').textContent = '';
+      $('gate').classList.add('hidden');
+      $('app').style.display = '';
+      clearEditor();
+      renderPostList();
+      setView('posts');
+      renderFriendList();
+      renderFriendPreview();
+    } else {
+      $('err').textContent = '密码错误';
+      $('pwd').select();
+    }
+  }).catch(function () {
+    $('err').textContent = '请确认浏览器支持 Web Crypto API';
+  });
+}
+$('enterBtn').addEventListener('click', doEnter);
+$('pwd').addEventListener('keydown', function (e) { if (e.key === 'Enter') doEnter(); });
+
+/* 启动：默认聚焦密码框 */
+$('pwd').focus();
+
+/* ============================================================
+ * 发布数据源：本机文件 / GitHub 仓库 / Cloudflare KV
+ * （与导航 admin.html 同思路，但写回对象是 posts-data.js 的 __POSTS__ 块 / KV）
+ * ============================================================ */
+var dataSource = 'file';               /* 当前发布目标：file / github / cloudflare */
+var rawBlog = '';                      /* 从 GitHub / 本机读取到的 posts-data.js 源码（GH 写回要用） */
+var ghOwnerRepo = '', ghBranch = 'main', ghPath = 'posts-data.js', ghSha = '';
+var cfUrl = '', cfSecret = '', cfKey = 'blog-posts', cfLoaded = false;
+var cfFriendsKey = 'blog-friends', cfFriendsLoaded = false;
+var fileHandle = null;                 /* 本机 posts-data.js 文件句柄（FSA） */
+
+/* UTF-8 安全的 base64 编解码（GitHub 内容接口用 base64 传输文件） */
+function b64EncodeUnicode(str) {
+  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function (m, p) {
+    return String.fromCharCode(parseInt(p, 16));
+  }));
+}
+function b64DecodeUnicode(str) {
+  return decodeURIComponent(Array.prototype.map.call(atob(str.replace(/\s/g, '')), function (c) {
+    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+}
+
+/* 从 posts-data.js 提取顶层 window.__POSTS__ = [ ... ] 的代码段（按括号深度配对） */
+function extractPostsSegment(text) {
+  var start = text.indexOf('window.__POSTS__');
+  if (start < 0) return null;
+  var lb = text.indexOf('[', start);
+  if (lb < 0) return null;
+  var depth = 0, i = lb;
+  for (; i < text.length; i++) {
+    var ch = text.charAt(i);
+    if (ch === '[') depth++;
+    else if (ch === ']') { depth--; if (depth === 0) { i++; break; } }
+  }
+  return text.slice(lb, i);
+}
+/* 把提取出的 JS 字面量安全求值成数组（用于解析仓库/本机文件里的 POSTS） */
+function parsePostsFromHtml(text) {
+  var seg = extractPostsSegment(text);
+  if (!seg) return null;
+  try { return (new Function('return (' + seg + ');'))(); }
+  catch (e) { return null; }
+}
+
+/* 把远端 / 本机读取到的文章数组应用到后台内存并刷新列表 */
+function applyPosts(arr, note) {
+  if (!Array.isArray(arr)) return false;
+  posts = arr; savePosts(posts); renderPostList();
+  if (note) toast(note);
+  return true;
+}
+
+/* 数据源连接信息持久化（仅本机 localStorage） */
+function persistSrc() {
+  try {
+    localStorage.setItem('blogAdminSrc', dataSource);
+    localStorage.setItem('blogAdminGhToken', $('ghToken').value.trim());
+    localStorage.setItem('blogAdminGhRepo', ghOwnerRepo);
+    localStorage.setItem('blogAdminGhBranch', ghBranch);
+    localStorage.setItem('blogAdminGhPath', ghPath);
+    localStorage.setItem('blogAdminCfUrl', cfUrl);
+    localStorage.setItem('blogAdminCfSecret', cfSecret);
+    localStorage.setItem('blogAdminCfKey', cfKey);
+  } catch (e) {}
+}
+function restoreSrcInputs() {
+  try {
+    var v;
+    if (v = localStorage.getItem('blogAdminGhToken')) $('ghToken').value = v;
+    if (v = localStorage.getItem('blogAdminGhRepo')) $('ghRepo').value = v;
+    if (v = localStorage.getItem('blogAdminGhBranch')) $('ghBranch').value = v;
+    if (v = localStorage.getItem('blogAdminGhPath')) $('ghPath').value = v;
+    if (v = localStorage.getItem('blogAdminCfUrl')) $('cfUrl').value = v;
+    if (v = localStorage.getItem('blogAdminCfSecret')) $('cfSecret').value = v;
+    if (v = localStorage.getItem('blogAdminCfKey')) $('cfKey').value = v;
+    if (v = localStorage.getItem('blogAdminSrc')) setDataSource(v);
+  } catch (e) {}
+}
+
+/* 切换数据源 tab + 联动面板与状态 */
+function setDataSource(src) {
+  dataSource = src;
+  document.querySelectorAll('.src-tab').forEach(function (t) {
+    t.classList.toggle('active', t.getAttribute('data-src') === src);
+  });
+  document.querySelectorAll('.src-pane').forEach(function (p) {
+    p.classList.toggle('active', p.getAttribute('data-pane') === src);
+  });
+  var st = $('srcStatus'), txt = $('srcStatusText');
+  st.classList.remove('connected');
+  if (src === 'github' && ghSha) { st.classList.add('connected'); txt.textContent = 'GitHub 已连接'; }
+  else if (src === 'cloudflare' && cfLoaded) { st.classList.add('connected'); txt.textContent = 'Cloudflare 已连接'; }
+  else if (src === 'file' && fileHandle) { st.classList.add('connected'); txt.textContent = '本机文件已选'; }
+  else { txt.textContent = '未连接'; }
+  refreshPublishButtons();
+}
+
+/* ============================================================
+ * 本机文件（File System Access）：选 posts-data.js 并读取 __POSTS__
+ * ============================================================ */
+var hasFSA = !!window.showOpenFilePicker;
+function pickAndLoad() {
+  if (!hasFSA) { setSrcMsg('fileMsg', '当前浏览器不支持直接读写文件，请使用 Chrome / Edge。', 'err'); return; }
+  var opts = { types: [{ description: 'HTML 文件', accept: { 'text/html': ['.html', '.htm'] } }], excludeAcceptAllOption: false, multiple: false };
+  window.showOpenFilePicker(opts).then(function (handles) {
+    var h = handles[0];
+    return ensurePermission(h, 'readwrite').then(function (granted) {
+      if (!granted) throw new Error('未获得文件权限');
+      return loadFromHandle(h);
+    });
+  }).catch(function (e) {
+    if (e && e.name === 'AbortError') return;
+    setSrcMsg('fileMsg', '选择文件失败：' + (e && e.message ? e.message : e), 'err');
+  });
+}
+function loadFromHandle(handle) {
+  return handle.getFile().then(function (file) { return file.text(); }).then(function (text) {
+    rawBlog = text; fileHandle = handle;
+    var arr = parsePostsFromHtml(text);
+    var fr = parseFriendsFromHtml(text);
+    if (!arr && !fr) { setSrcMsg('fileMsg', '未在选中的文件中找到 __POSTS__ / FRIENDS 数据块。', 'err'); return; }
+    var note = '已从本机文件载入 ';
+    if (arr) { applyPosts(arr); note += arr.length + ' 篇文章'; }
+    if (fr) { friends = fr; saveFriends(); renderFriendList(); note += (arr ? '、' : '') + fr.length + ' 条友链'; }
+    setSrcMsg('fileMsg', '已载入本机 posts-data.js（' + (arr ? arr.length : 0) + ' 篇 / ' + (fr ? fr.length : 0) + ' 友链）。发布时会写回该文件。', 'ok');
+    setDataSource('file');
+  });
+}
+
+/* ============================================================
+ * GitHub 数据仓库：Contents API 读写 posts-data.js
+ * ============================================================ */
+function ghLoad() {
+  var token = $('ghToken').value.trim();
+  var repo = $('ghRepo').value.trim();
+  var branch = $('ghBranch').value.trim() || 'main';
+  var path = $('ghPath').value.trim() || 'posts-data.js';
+  if (!token) { setSrcMsg('ghMsg', '请填写 GitHub Token', 'err'); return; }
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) { setSrcMsg('ghMsg', '仓库格式应为 owner/repo', 'err'); return; }
+  setSrcMsg('ghMsg', '正在从 GitHub 读取…');
+  var url = 'https://api.github.com/repos/' + repo + '/contents/' + encodeURIComponent(path) + '?ref=' + encodeURIComponent(branch);
+  fetch(url, { headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' } })
+    .then(function (r) { return r.json().then(function (j) { return { r: r, j: j }; }); })
+    .then(function (o) {
+      if (!o.r.ok) throw new Error(o.j.message || ('HTTP ' + o.r.status));
+      rawBlog = b64DecodeUnicode(o.j.content);
+      ghOwnerRepo = repo; ghBranch = branch; ghPath = path; ghSha = o.j.sha;
+      var arr = parsePostsFromHtml(rawBlog);
+      var fr = parseFriendsFromHtml(rawBlog);
+      if (!arr && !fr) throw new Error('仓库文件中未找到 __POSTS__ / FRIENDS 数据块');
+      if (arr) applyPosts(arr);
+      if (fr) { friends = fr; saveFriends(); renderFriendList(); }
+      var note = '已连接 ' + path + '（' + (arr ? arr.length : 0) + ' 篇';
+      note += (fr ? ' / ' + fr.length + ' 条友链' : '') + '）。发布时写回仓库。';
+      setSrcMsg('ghMsg', note, 'ok');
+      persistSrc(); setDataSource('github');
+    })
+    .catch(function (e) { setSrcMsg('ghMsg', 'GitHub 读取失败：' + (e && e.message ? e.message : e), 'err'); });
+}
+function ghSave() {
+  var token = $('ghToken').value.trim();
+  if (!token || !ghSha) { setSrcMsg('ghMsg', '请先在「GitHub 仓库」标签页连接并读取。', 'err'); return; }
+  setSrcMsg('ghMsg', '正在写回 GitHub…');
+  var next = buildFullSource(rawBlog);
+  var body = { message: 'Update blog data (posts + friends) via blog-admin.html', content: b64EncodeUnicode(next), sha: ghSha, branch: ghBranch };
+  var url = 'https://api.github.com/repos/' + ghOwnerRepo + '/contents/' + encodeURIComponent(ghPath);
+  fetch(url, { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    .then(function (r) { return r.json().then(function (j) { return { r: r, j: j }; }); })
+    .then(function (o) {
+      if (!o.r.ok) throw new Error(o.j.message || ('HTTP ' + o.r.status));
+      ghSha = o.j.content.sha; rawBlog = next;
+      setSrcMsg('ghMsg', '已写回 GitHub ✓（Pages 通常几秒~1 分钟生效）', 'ok');
+      toast('✓ 已发布到 GitHub');
+    })
+    .catch(function (e) { setSrcMsg('ghMsg', 'GitHub 写回失败：' + (e && e.message ? e.message : e), 'err'); });
+}
+
+/* ============================================================
+ * Cloudflare KV：通过自建 Worker 读写 POSTS（无需 Git）
+ * 前台 blog.html 需设置 POSTS_URL 以便从 KV 读取
+ * ============================================================ */
+function cfLoad() {
+  cfUrl = $('cfUrl').value.trim();
+  cfSecret = $('cfSecret').value.trim();
+  cfKey = $('cfKey').value.trim() || 'blog-posts';
+  if (!cfUrl) { setSrcMsg('cfMsg', '请填写数据 API 地址', 'err'); return; }
+  setSrcMsg('cfMsg', '正在从 Cloudflare 读取…');
+  var full = cfUrl.replace(/\/+$/, '') + '/' + encodeURIComponent(cfKey);
+  var headers = {}; if (cfSecret) headers['Authorization'] = 'Bearer ' + cfSecret;
+  fetch(full, { headers: headers })
+    .then(function (r) { return r.json().then(function (j) { return { r: r, j: j }; }).catch(function () { return { r: r, j: {} }; }); })
+    .then(function (o) {
+      if (!o.r.ok) throw new Error(o.j.error || ('HTTP ' + o.r.status));
+      if (!Array.isArray(o.j.POSTS)) throw new Error('返回数据缺少 POSTS 数组');
+      applyPosts(o.j.POSTS, '已从 Cloudflare 读取 ' + o.j.POSTS.length + ' 篇');
+      cfLoaded = true; persistSrc(); setDataSource('cloudflare');
+      setSrcMsg('cfMsg', '已连接 KV（' + o.j.POSTS.length + ' 篇）。发布时写回 KV。', 'ok');
+      /* 再读友情链接（blog-friends），读不到则保留本地 */
+      var ffull = cfUrl.replace(/\/+$/, '') + '/' + encodeURIComponent(cfFriendsKey);
+      fetch(ffull, { headers: headers })
+        .then(function (fr) { return fr.json().then(function (fj) { return { r: fr, j: fj }; }).catch(function () { return { r: fr, j: {} }; }); })
+        .then(function (fo) {
+          if (fo.r.ok && Array.isArray(fo.j.FRIENDS)) {
+            friends = fo.j.FRIENDS; saveFriends(); renderFriendList();
+            cfFriendsLoaded = true;
+            setSrcMsg('cfMsg', '已连接 KV（' + o.j.POSTS.length + ' 篇 / ' + fo.j.FRIENDS.length + ' 条友链）。', 'ok');
+          }
+        })
+        .catch(function () {});
+    })
+    .catch(function (e) { setSrcMsg('cfMsg', 'Cloudflare 读取失败：' + (e && e.message ? e.message : e), 'err'); });
+}
+function cfSave() {
+  if (!cfUrl) { setSrcMsg('cfMsg', '请先在「Cloudflare KV」标签页填写 API 地址并连接。', 'err'); return; }
+  if (!cfLoaded) { setSrcMsg('cfMsg', '尚未从 Cloudflare 读取，无法写回（请先连接并读取）。', 'err'); return; }
+  setSrcMsg('cfMsg', '正在写回 Cloudflare…');
+  var headers = { 'Content-Type': 'application/json' };
+  if (cfSecret) headers['Authorization'] = 'Bearer ' + cfSecret;
+
+  function putOne(key, payload) {
+    var full = cfUrl.replace(/\/+$/, '') + '/' + encodeURIComponent(key);
+    return fetch(full, { method: 'PUT', headers: headers, body: JSON.stringify(payload) })
+      .then(function (r) { return r.json().then(function (j) { return { r: r, j: j }; }).catch(function () { return { r: r, j: {} }; }); })
+      .then(function (o) { if (!o.r.ok) throw new Error(o.j.error || ('HTTP ' + o.r.status)); });
+  }
+
+  /* 文章 + 友情链接分别写入 blog-posts / blog-friends 两个 Key */
+  putOne(cfKey, { POSTS: posts })
+    .then(function () { return putOne(cfFriendsKey, { FRIENDS: friends }); })
+    .then(function () {
+      cfFriendsLoaded = true;
+      setSrcMsg('cfMsg', '已写回 Cloudflare KV ✓（前台 blog.html 刷新即从 KV 读取文章与友链）', 'ok');
+      toast('✓ 已发布到 Cloudflare');
+    })
+    .catch(function (e) { setSrcMsg('cfMsg', 'Cloudflare 写回失败：' + (e && e.message ? e.message : e), 'err'); });
+}
+
+/* 数据源 tab / 按钮 提示 */
+function setSrcMsg(id, text, cls) {
+  var el = $(id); if (!el) return;
+  el.textContent = text || '';
+  el.className = 'src-msg' + (cls ? ' ' + cls : '');
+}
+
+/* 发布模态：按当前数据源可用性启用/禁用对应按钮 */
+function refreshPublishButtons() {
+  if ($('writeBtn')) $('writeBtn').disabled = !hasFSA;
+  if ($('ghPushBtn')) $('ghPushBtn').disabled = !(dataSource === 'github' && ghSha);
+  if ($('cfPushBtn')) $('cfPushBtn').disabled = !(dataSource === 'cloudflare' && cfLoaded);
+}
+
+/* ============================================================
+ * 修改密码：客户端校验旧密码后，把新密码哈希存入 localStorage
+ * ============================================================ */
+function openPwModal() { $('pwErr').textContent = ''; $('pwOld').value = ''; $('pwNew').value = ''; $('pwNew2').value = ''; $('pwModal').classList.remove('hidden'); }
+function doChangePass() {
+  var oldP = $('pwOld').value, newP = $('pwNew').value, newP2 = $('pwNew2').value;
+  var err = $('pwErr'); err.textContent = '';
+  if (!oldP || !newP || !newP2) { err.textContent = '请填写所有字段'; return; }
+  if (newP.length < 6) { err.textContent = '新密码至少 6 位'; return; }
+  if (newP !== newP2) { err.textContent = '两次输入的新密码不一致'; return; }
+  verifyPassword(oldP).then(function (ok) {
+    if (!ok) { err.textContent = '当前密码错误'; return; }
+    return sha256Hex(ADMIN_SALT + newP).then(function (h) {
+      try { localStorage.setItem('blogAdminPassHash', h); } catch (e) {}
+      $('pwModal').classList.add('hidden');
+      alert('密码已修改成功，请牢记新密码。');
+    });
+  }).catch(function () { err.textContent = '校验失败，请重试'; });
+}
+
+/* ============================================================
+ * 绑定：数据源 / 密码 相关 UI
+ * ============================================================ */
+$('srcBtn').addEventListener('click', function () {
+  restoreSrcInputs();
+  $('srcModal').classList.remove('hidden');
+});
+$('closeSrc').addEventListener('click', function () { $('srcModal').classList.add('hidden'); });
+$('srcModal').addEventListener('click', function (e) { if (e.target === $('srcModal')) $('srcModal').classList.add('hidden'); });
+document.querySelectorAll('.src-tab').forEach(function (t) {
+  t.addEventListener('click', function () { setDataSource(t.getAttribute('data-src')); });
+});
+$('pickFileBtn').addEventListener('click', pickAndLoad);
+$('ghConnect').addEventListener('click', ghLoad);
+$('cfConnect').addEventListener('click', cfLoad);
+
+$('pwBtn').addEventListener('click', openPwModal);
+$('pwCancel').addEventListener('click', function () { $('pwModal').classList.add('hidden'); });
+$('pwSubmit').addEventListener('click', doChangePass);
+$('pwModal').addEventListener('click', function (e) { if (e.target === $('pwModal')) $('pwModal').classList.add('hidden'); });
+
+/* 发布模态新增的 GitHub / Cloudflare 推送按钮 */
+$('ghPushBtn').addEventListener('click', function () {
+  if ($('ghPushBtn').disabled) { toast('请先在「数据源」中连接 GitHub 仓库'); return; }
+  ghSave();
+});
+$('cfPushBtn').addEventListener('click', function () {
+  if ($('cfPushBtn').disabled) { toast('请先在「数据源」中连接 Cloudflare KV'); return; }
+  cfSave();
+});
+
+/* 启动：预填数据源输入框（不自动连接，避免意外的远程读取） */
+restoreSrcInputs();
+
+/* 暴露给控制台，方便调试 */
+window.blogAdmin = { posts: function () { return posts; }, drafts: function () { return drafts; }, savePosts: savePosts, saveDrafts: saveDrafts, dataSource: function () { return dataSource; } };
+</script>
+</body>
+</html>

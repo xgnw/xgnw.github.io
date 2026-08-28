@@ -269,6 +269,7 @@
           <div class="nv_src_tabs">
             <button type="button" class="nv_src_tab active" data-src="file">本机文件</button>
             <button type="button" class="nv_src_tab" data-src="github">GitHub 仓库</button>
+            <button type="button" class="nv_src_tab" data-src="cloudflare">Cloudflare KV</button>
           </div>
           <div id="nvFilePane" class="nv_src_pane">
             <span class="nv_file_msg">请选择你的 index.html 文件以载入导航数据：</span>
@@ -282,6 +283,14 @@
             <button type="button" id="ghConnect" class="nv_btn">连接并读取</button>
             <span id="ghState" class="nv_file_msg"></span>
             <p class="nv_gh_warn">用 GitHub API 直接读写仓库文件（无需服务端）。Token 仅存于本浏览器 localStorage，请使用具备 <code>repo</code> 权限的 Token（Fine-grained Token 需 Contents 读写权限）。注意：部署在公开站点时，此 Token 等同你的仓库写权限，请勿在公共电脑勾留。</p>
+          </div>
+          <div id="nvCfPane" class="nv_src_pane hidden">
+            <input id="cfUrl" class="nv_gh_input" placeholder="数据 API 地址（如 https://nav-data-api.xxx.workers.dev）" autocomplete="off" />
+            <input id="cfSecret" class="nv_gh_input" type="password" placeholder="管理员密钥（与 Worker 的 ADMIN_SECRET 一致）" autocomplete="off" />
+            <input id="cfKey" class="nv_gh_input" placeholder="Key 名（默认 nav-data）" value="nav-data" autocomplete="off" />
+            <button type="button" id="cfConnect" class="nv_btn">连接并读取</button>
+            <span id="cfState" class="nv_file_msg"></span>
+            <p class="nv_gh_warn">通过 Cloudflare Worker 直接读写 KV（无需 Git、无需服务端）。API 地址与密钥仅存于本浏览器 localStorage。需先在 Cloudflare 部署本目录 <code>cloudflare/</code> 下的 Worker 并建好 KV 命名空间。公开读取接口无需密钥；写回需管理员密钥。</p>
           </div>
         </div>
 
@@ -501,6 +510,7 @@
     /* 重新从数据源载入（放弃未保存改动）：GitHub 走 API，本机走 FSA */
     function reloadFromFile() {
       if (dataSource === 'github') { ghLoad(); return; }
+      if (dataSource === 'cloudflare') { cfLoad(); return; }
       if (!fileHandle) { pickAndLoad(); return; }
       loadFromHandle(fileHandle, true).then(function () {
         setHint('已从文件重新载入（未保存的改动已丢弃）。');
@@ -523,6 +533,7 @@
     /* 保存：按当前数据源写回（本机文件走 FSA，GitHub 走 API） */
     function doSave() {
       if (dataSource === 'github') { ghSave(); return; }
+      if (dataSource === 'cloudflare') { cfSave(); return; }
       if (!fileHandle) { setHint('请先选择 index.html 文件。'); return; }
       setHint('正在保存…');
       ensurePermission(fileHandle, 'readwrite').then(function (granted) {
@@ -558,15 +569,83 @@
         localStorage.setItem('adminSrc', 'github');
       } catch (e) {}
     }
-    /* 切换数据源：本机文件 / GitHub 仓库，并联动标签页与提示 */
+    /* ---------- Cloudflare KV 数据源：通过自建 Worker 读写 KV（无需 Git、无需服务端） ---------- */
+    var cfUrl = '', cfSecret = '', cfKey = 'nav-data', cfLoaded = false;
+    /* 把当前 Cloudflare 连接信息存入 localStorage（地址与密钥，仅本机可用） */
+    function persistCf() {
+      try {
+        localStorage.setItem('adminCfUrl', cfUrl);
+        localStorage.setItem('adminCfSecret', cfSecret);
+        localStorage.setItem('adminCfKey', cfKey);
+        localStorage.setItem('adminSrc', 'cloudflare');
+      } catch (e) {}
+    }
+    /* 从 localStorage 预填 Cloudflare 输入框 */
+    function restoreCf() {
+      try {
+        var u = localStorage.getItem('adminCfUrl'); if (u) document.getElementById('cfUrl').value = u;
+        var s = localStorage.getItem('adminCfSecret'); if (s) document.getElementById('cfSecret').value = s;
+        var k = localStorage.getItem('adminCfKey'); if (k) document.getElementById('cfKey').value = k;
+      } catch (e) {}
+    }
+    /* 从 Cloudflare KV 读取导航数据（GET 公开；数据格式 {NAV_DATA, SEARCH_ENGINES}） */
+    function cfLoad() {
+      cfUrl = document.getElementById('cfUrl').value.trim();
+      cfSecret = document.getElementById('cfSecret').value.trim();
+      cfKey = document.getElementById('cfKey').value.trim() || 'nav-data';
+      var st = document.getElementById('cfState');
+      if (!cfUrl) { alert('请填写数据 API 地址'); return; }
+      setHint('正在从 Cloudflare 读取…'); if (st) st.textContent = '读取中…';
+      var full = cfUrl.replace(/\/+$/, '') + '/' + encodeURIComponent(cfKey);
+      var headers = {}; if (cfSecret) headers['Authorization'] = 'Bearer ' + cfSecret;
+      fetch(full, { headers: headers })
+        .then(function (r) { return r.json().then(function (j) { return { r: r, j: j }; }).catch(function () { return { r: r, j: {} }; }); })
+        .then(function (o) {
+          if (!o.r.ok) throw new Error(o.j.error || ('HTTP ' + o.r.status));
+          if (!Array.isArray(o.j.NAV_DATA)) throw new Error('返回数据缺少 NAV_DATA 数组');
+          NAV_DATA = o.j.NAV_DATA;
+          SEARCH_ENGINES = Array.isArray(o.j.SEARCH_ENGINES) ? o.j.SEARCH_ENGINES : [];
+          cfLoaded = true; dataSource = 'cloudflare'; persistCf();
+          fillCatSelect(); renderManageList(); renderEngineList(); updateCount();
+          clearDirty(); hideFileBar(); if (st) st.textContent = '';
+          setHint('已从 Cloudflare 读取。修改后点「保存并写回」写回 KV。');
+        })
+        .catch(function (e) {
+          if (st) st.textContent = '';
+          setHint('Cloudflare 读取失败：' + (e && e.message ? e.message : e) + '（检查 API 地址 / 密钥 / KV 是否已初始化）');
+        });
+    }
+    /* 写回 Cloudflare KV（PUT 数据 JSON，需管理员密钥） */
+    function cfSave() {
+      if (!cfUrl) { setHint('请先在「Cloudflare KV」标签页填写 API 地址并连接。'); return; }
+      if (!cfLoaded) { setHint('尚未从 Cloudflare 读取，无法写回（请先连接并读取）。'); return; }
+      setHint('正在写回 Cloudflare…');
+      var payload = JSON.stringify({ NAV_DATA: NAV_DATA, SEARCH_ENGINES: SEARCH_ENGINES });
+      var full = cfUrl.replace(/\/+$/, '') + '/' + encodeURIComponent(cfKey);
+      var headers = { 'Content-Type': 'application/json' };
+      if (cfSecret) headers['Authorization'] = 'Bearer ' + cfSecret;
+      fetch(full, { method: 'PUT', headers: headers, body: payload })
+        .then(function (r) { return r.json().then(function (j) { return { r: r, j: j }; }).catch(function () { return { r: r, j: {} }; }); })
+        .then(function (o) {
+          if (!o.r.ok) throw new Error(o.j.error || ('HTTP ' + o.r.status));
+          clearDirty();
+          setHint('已写回 Cloudflare KV ✓（导航站下次刷新即从 KV 读取新数据）');
+        })
+        .catch(function (e) { setHint('Cloudflare 写回失败：' + (e && e.message ? e.message : e)); });
+    }
+
+    /* 切换数据源：本机文件 / GitHub 仓库 / Cloudflare KV，并联动标签页与提示 */
     function setDataSource(src) {
       dataSource = src;
       var fTab = document.querySelector('.nv_src_tab[data-src="file"]');
       var gTab = document.querySelector('.nv_src_tab[data-src="github"]');
+      var cTab = document.querySelector('.nv_src_tab[data-src="cloudflare"]');
       if (fTab) fTab.classList.toggle('active', src === 'file');
       if (gTab) gTab.classList.toggle('active', src === 'github');
+      if (cTab) cTab.classList.toggle('active', src === 'cloudflare');
       var fp = document.getElementById('nvFilePane'); if (fp) fp.classList.toggle('hidden', src !== 'file');
       var gp = document.getElementById('nvGhPane'); if (gp) gp.classList.toggle('hidden', src !== 'github');
+      var cp = document.getElementById('nvCfPane'); if (cp) cp.classList.toggle('hidden', src !== 'cloudflare');
       try { localStorage.setItem('adminSrc', src); } catch (e) {}
     }
     /* 从 GitHub 仓库读取 index.html 源码（GET contents，附带 blob 的 sha） */
@@ -1023,6 +1102,9 @@
       if (savedSrc === 'github' && localStorage.getItem('adminGhToken')) {
         setDataSource('github'); showFileBar(); ghLoad(); return;
       }
+      if (savedSrc === 'cloudflare' && localStorage.getItem('adminCfUrl')) {
+        setDataSource('cloudflare'); showFileBar(); restoreCf(); cfLoad(); return;
+      }
       setDataSource('file');
       if (!hasFSA) { showFileBar(); setHint('当前浏览器不支持本机文件读写，请用「GitHub 仓库」标签页连接后管理。'); return; }
       restoreHandle().then(function (h) {
@@ -1067,6 +1149,8 @@
       });
       var ghConn = document.getElementById('ghConnect');
       if (ghConn) ghConn.addEventListener('click', ghLoad);
+      var cfConn = document.getElementById('cfConnect');
+      if (cfConn) cfConn.addEventListener('click', cfLoad);
       var nvList = document.getElementById('nvManageList');
       if (nvList && !nvList._bound) { nvList.addEventListener('click', onManageClick); nvList._bound = true; }
       var seList = document.getElementById('seManageList');
