@@ -258,7 +258,7 @@
 
 1. **起点**：以 432600.xyz 的数据为蓝本，做成单文件 HTML 导航页；`NAV_DATA` 数组最初位于
    页面中部，后移至底部并加「改这里即可」横幅注释，提升可编辑性。
-2. **去模板化（"去 heo 化"）**：逐步清理原模板残留的 CSS 变量、JS 对象、localStorage key、
+2. **去模板化**：逐步清理原模板残留的 CSS 变量、JS 对象、localStorage key、
    页面 title 等痕迹，确立自己的命名与蓝色配色体系。
 3. **浏览器内可视化编辑**：先实现带 `node serve.js` 鉴权的服务端方案；后为「更简单」，
    **改为纯浏览器方案**——用 File System Access API 直接读写本机 `index.html` / `posts-data.js`，
