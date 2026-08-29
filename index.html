@@ -283,7 +283,7 @@
       .sn svg, .tt button svg { width: 20px; height: 20px; }
       /* ============ 返回顶部 ============ */
   /* 返回顶部按钮：固定右下，默认隐藏 */
-.bt { right: 16px; bottom: 16px; height: 40px; width: 40px; }
+.bt { right: 16px; bottom: 16px; height: 40px; width: 40px; top: auto; }
       .lg_c { gap: 6px; }
       a.lg_cl { min-width: 0; }
     }
@@ -299,15 +299,15 @@
       .se { left: 0.5rem !important; right: 0.5rem !important; top: 52px !important; padding: 12px; }
     }
     .bt {
-      position: fixed; right: 24px; bottom: 24px; z-index: 200;
+      position: fixed; right: 20px; top: 50%; z-index: 200;
       height: 44px; width: 44px; border-radius: 12px;
       background: var(--card-bg); color: var(--fontcolor);
       border: var(--style-border-always); cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      opacity: 0; visibility: hidden; transform: translateY(8px);
+      opacity: 0; visibility: hidden; transform: translateY(-50%) translateX(8px);
       transition: 0.3s; box-shadow: var(--shadow-border);
     }
-    .bt.show { opacity: 1; visibility: visible; transform: translateY(0); }
+    .bt.show { opacity: 1; visibility: visible; transform: translateY(-50%) translateX(0); }
     .bt svg { width: 22px; height: 22px; }
     @media (hover:hover) {
       .bt:hover { background: var(--theme); color: var(--white); border: var(--style-border-hover-always); }
@@ -1025,11 +1025,6 @@ var NAV_DATA = [
         "desc": "AnyKnew 是一个效率资讯 - 高效读新闻, 5分钟遍历全网热点"
       },
       {
-        "url": "https://ali.gitcafe.ink/",
-        "title": "小纸条",
-        "desc": "开放纯粹的资源网站"
-      },
-      {
         "url": "https://picx.xpoet.cn/",
         "title": "PicX 图床神器",
         "desc": "基于 GitHub API 开发的具有 CDN 加速功能的图床管理工具。"
@@ -1040,21 +1035,6 @@ var NAV_DATA = [
         "desc": "https://wannengrun.net/"
       },
       {
-        "url": "https://filehelper.weixin.qq.com/",
-        "title": "微信文件传输助手",
-        "desc": "https://filehelper.weixin.qq.com/"
-      },
-      {
-        "url": "https://www.yuque.com/",
-        "title": "语雀",
-        "desc": "https://www.yuque.com/"
-      },
-      {
-        "url": "http://mail.qq.com/",
-        "title": "QQ 邮箱",
-        "desc": "http://mail.qq.com/"
-      },
-      {
         "url": "https://www.oschina.net/",
         "title": "开源中国",
         "desc": "https://www.oschina.net/"
@@ -1063,11 +1043,6 @@ var NAV_DATA = [
         "url": "https://mp.weixin.qq.com/",
         "title": "公众号平台",
         "desc": "https://mp.weixin.qq.com/"
-      },
-      {
-        "url": "https://weixin.sogou.com/",
-        "title": "搜狗微信",
-        "desc": "https://weixin.sogou.com/"
       },
       {
         "url": "https://www.v2ex.com/",
@@ -1085,11 +1060,6 @@ var NAV_DATA = [
     "id": "cat-website",
     "name": "建站相关",
     "links": [
-      {
-        "url": "https://ju.cx/",
-        "title": "优惠聚查",
-        "desc": "全网域名注册、续费、转入价格比价注册商优惠查。"
-      },
       {
         "url": "https://who.cx/",
         "title": "Whois 查询",
@@ -1182,31 +1152,6 @@ var NAV_DATA = [
         "desc": "常用的电子书搜索集合"
       },
       {
-        "url": "https://www.xinpianchang.com/",
-        "title": "新片场",
-        "desc": "汇集新片场创作人短片原创作品"
-      },
-      {
-        "url": "https://www.kisssub.org/",
-        "title": "爱恋动漫下载",
-        "desc": "各种动漫资源"
-      },
-      {
-        "url": "https://www.pearvideo.com/",
-        "title": "梨视频",
-        "desc": "资讯短视频"
-      },
-      {
-        "url": "https://photo.ihansen.org/",
-        "title": "美图集",
-        "desc": "海量高清图片和桌面壁纸，高质量图片免费下载"
-      },
-      {
-        "url": "https://www.aigei.com/",
-        "title": "爱给网",
-        "desc": "中国最大的数字娱乐免费素材下载网站"
-      },
-      {
         "url": "http://fflp.ysepan.com/",
         "title": "非凡工作室",
         "desc": "乱七八糟的个人网站"
@@ -1296,16 +1241,6 @@ var NAV_DATA = [
         "url": "https://n.shellpub.com/",
         "title": "shellpub",
         "desc": "在线的脚本安全检查网站"
-      },
-      {
-        "url": "http://weibodang.cn/",
-        "title": "微博党",
-        "desc": "各种在线视频下载网站,相当好用"
-      },
-      {
-        "url": "https://cowtransfer.com/",
-        "title": "奶牛快传",
-        "desc": "国内一个好用的临时传输网盘,支持手机和二维码"
       },
       {
         "url": "https://www.google.cn/maps/",
@@ -1403,64 +1338,9 @@ var NAV_DATA = [
         "desc": "以推荐相似软件出名，支持按照平台来搜索，Windows, Mac, Linux 和Web 等平台都可以。"
       },
       {
-        "url": "http://goqr.me/",
-        "title": "goqr",
-        "desc": "http://goqr.me/"
-      },
-      {
-        "url": "https://ezgif.com",
-        "title": "ezgif",
-        "desc": "https://ezgif.com"
-      },
-      {
-        "url": "http://inloop.github.io/shadow4android/",
-        "title": "Android 9 patch",
-        "desc": "http://inloop.github.io/shadow4android/"
-      },
-      {
-        "url": "http://screensiz.es/",
-        "title": "screen sizes",
-        "desc": "http://screensiz.es/"
-      },
-      {
-        "url": "https://jakearchibald.github.io/svgomg/",
-        "title": "svgomg",
-        "desc": "https://jakearchibald.github.io/svgomg/"
-      },
-      {
-        "url": "https://www.gaoding.com",
-        "title": "稿定设计",
-        "desc": "https://www.gaoding.com"
-      },
-      {
-        "url": "https://github.com/alexpate/awesome-design-systems",
-        "title": "Awesome design systems",
-        "desc": "https://github.com/alexpate/awesome-design-systems"
-      },
-      {
-        "url": "https://material.io/guidelines/",
-        "title": "Material Design",
-        "desc": "https://material.io/guidelines/"
-      },
-      {
-        "url": "https://developer.apple.com/ios/human-interface-guidelines",
-        "title": "Human Interface Guidelines",
-        "desc": "https://developer.apple.com/ios/human-interface-guidelines"
-      },
-      {
         "url": "https://www.zcool.com.cn/",
         "title": "站酷 (ZCOOL)",
         "desc": "https://www.zcool.com.cn/"
-      },
-      {
-        "url": "https://www.behance.net/",
-        "title": "Behance",
-        "desc": "https://www.behance.net/"
-      },
-      {
-        "url": "https://www.hellorf.com/",
-        "title": "站酷海洛",
-        "desc": "https://www.hellorf.com/"
       },
       {
         "url": "https://818ps.com/",
@@ -1473,16 +1353,6 @@ var NAV_DATA = [
         "desc": "https://www.chuangkit.com/"
       },
       {
-        "url": "https://www.pinterest.com/",
-        "title": "pinterest",
-        "desc": "https://www.pinterest.com/"
-      },
-      {
-        "url": "https://www.designspiration.com/",
-        "title": "Designspiration",
-        "desc": "https://www.designspiration.com/"
-      },
-      {
         "url": "https://huaban.com/",
         "title": "花瓣网",
         "desc": "https://huaban.com/"
@@ -1491,36 +1361,6 @@ var NAV_DATA = [
         "url": "https://www.uisdc.com/",
         "title": "优设网",
         "desc": "https://www.uisdc.com/"
-      },
-      {
-        "url": "https://www.wappalyzer.com/",
-        "title": "wappalyzer",
-        "desc": "https://www.wappalyzer.com/"
-      },
-      {
-        "url": "http://usepanda.com/",
-        "title": "Panda",
-        "desc": "http://usepanda.com/"
-      },
-      {
-        "url": "https://sizzy.co/",
-        "title": "sizzy",
-        "desc": "https://sizzy.co/"
-      },
-      {
-        "url": "https://csspeeper.com/",
-        "title": "csspeeper",
-        "desc": "https://csspeeper.com/"
-      },
-      {
-        "url": "http://insight.io/",
-        "title": "insight",
-        "desc": "http://insight.io/"
-      },
-      {
-        "url": "http://mustsee.earth/",
-        "title": "mustsee",
-        "desc": "http://mustsee.earth/"
       },
       {
         "url": "https://cdkm.com/cn/",
@@ -1694,16 +1534,6 @@ var NAV_DATA = [
         "desc": "https://www.gndown.com/"
       },
       {
-        "url": "https://downloadly.ir/",
-        "title": "downloadly",
-        "desc": "https://downloadly.ir/"
-      },
-      {
-        "url": "https://www.ghpym.com/",
-        "title": "果核剥壳",
-        "desc": "https://www.ghpym.com/"
-      },
-      {
         "url": "http://www.wepe.com.cn/",
         "title": "微PE工具箱",
         "desc": "http://www.wepe.com.cn/"
@@ -1754,236 +1584,6 @@ var NAV_DATA = [
         "desc": "https://www.fxxkmakeding.xyz/"
       },
       {
-        "url": "https://www.lanzou.com/",
-        "title": "蓝奏云",
-        "desc": "https://www.lanzou.com/"
-      },
-      {
-        "url": "http://qingwendang.com/",
-        "title": "轻文档",
-        "desc": "http://qingwendang.com/"
-      },
-      {
-        "url": "https://www.wenshushu.cn/",
-        "title": "文叔叔",
-        "desc": "https://www.wenshushu.cn/"
-      },
-      {
-        "url": "https://www.weiyun.com/",
-        "title": "微云",
-        "desc": "https://www.weiyun.com/"
-      },
-      {
-        "url": "http://pan.baidu.com/",
-        "title": "百度网盘",
-        "desc": "http://pan.baidu.com/"
-      },
-      {
-        "url": "https://www.aliyundrive.com/",
-        "title": "阿里云盘",
-        "desc": "https://www.aliyundrive.com/"
-      },
-      {
-        "url": "https://cloud.189.cn/",
-        "title": "天翼云盘",
-        "desc": "https://cloud.189.cn/"
-      },
-      {
-        "url": "https://jiandan.cn.eu.org/",
-        "title": "坚果云",
-        "desc": "https://jiandan.cn.eu.org/"
-      },
-      {
-        "url": "https://www.iconfinder.com",
-        "title": "Iconfinder",
-        "desc": "https://www.iconfinder.com"
-      },
-      {
-        "url": "http://www.iconfont.cn/",
-        "title": "iconfont",
-        "desc": "http://www.iconfont.cn/"
-      },
-      {
-        "url": "https://iconmonstr.com/",
-        "title": "iconmonstr",
-        "desc": "https://iconmonstr.com/"
-      },
-      {
-        "url": "http://www.iconarchive.com/",
-        "title": "Icon Archive",
-        "desc": "http://www.iconarchive.com/"
-      },
-      {
-        "url": "https://findicons.com/",
-        "title": "FindIcons",
-        "desc": "https://findicons.com/"
-      },
-      {
-        "url": "https://icomoon.io/app/",
-        "title": "IcoMoonApp",
-        "desc": "https://icomoon.io/app/"
-      },
-      {
-        "url": "http://www.easyicon.net/",
-        "title": "easyicon",
-        "desc": "http://www.easyicon.net/"
-      },
-      {
-        "url": "https://www.flaticon.com/",
-        "title": "flaticon",
-        "desc": "https://www.flaticon.com/"
-      },
-      {
-        "url": "http://ui-cloud.com/",
-        "title": "UICloud",
-        "desc": "http://ui-cloud.com/"
-      },
-      {
-        "url": "https://material.io/icons/",
-        "title": "Material icons",
-        "desc": "https://material.io/icons/"
-      },
-      {
-        "url": "https://fontawesome.com/icons/",
-        "title": "Font Awesome Icon",
-        "desc": "https://fontawesome.com/icons/"
-      },
-      {
-        "url": "http://ionicons.com/",
-        "title": "ion icons",
-        "desc": "http://ionicons.com/"
-      },
-      {
-        "url": "http://simplelineicons.com/",
-        "title": "Simpleline Icons",
-        "desc": "http://simplelineicons.com/"
-      },
-      {
-        "url": "https://www.adobe.com/cn/products/photoshop.html",
-        "title": "photoshop",
-        "desc": "https://www.adobe.com/cn/products/photoshop.html"
-      },
-      {
-        "url": "https://affinity.serif.com/",
-        "title": "Affinity Designer",
-        "desc": "https://affinity.serif.com/"
-      },
-      {
-        "url": "https://www.adobe.com/cn/products/illustrator/",
-        "title": "Illustrator",
-        "desc": "https://www.adobe.com/cn/products/illustrator/"
-      },
-      {
-        "url": "http://www.adobe.com/cn/products/indesign.html",
-        "title": "indesign",
-        "desc": "http://www.adobe.com/cn/products/indesign.html"
-      },
-      {
-        "url": "https://www.autodesk.com/products/3ds-max/overview",
-        "title": "3ds-max",
-        "desc": "https://www.autodesk.com/products/3ds-max/overview"
-      },
-      {
-        "url": "https://www.blender.org/",
-        "title": "Blender",
-        "desc": "https://www.blender.org/"
-      },
-      {
-        "url": "https://www.processon.com/",
-        "title": "ProcessOn",
-        "desc": "https://www.processon.com/"
-      },
-      {
-        "url": "https://ibaotu.com/",
-        "title": "包图网",
-        "desc": "https://ibaotu.com/"
-      },
-      {
-        "url": "https://dribbble.com/",
-        "title": "Dribbble",
-        "desc": "https://dribbble.com/"
-      },
-      {
-        "url": "https://pixabay.com/zh/",
-        "title": "Pixabay",
-        "desc": "https://pixabay.com/zh/"
-      },
-      {
-        "url": "https://unsplash.dogedoge.com/",
-        "title": "Unsplash(国内镜像)",
-        "desc": "https://unsplash.dogedoge.com/"
-      },
-      {
-        "url": "https://stocksnap.io/",
-        "title": "StockSnap",
-        "desc": "https://stocksnap.io/"
-      },
-      {
-        "url": "https://www.pexels.com/zh-cn/",
-        "title": "Pexels",
-        "desc": "https://www.pexels.com/zh-cn/"
-      },
-      {
-        "url": "https://librestock.com/",
-        "title": "Librestock",
-        "desc": "https://librestock.com/"
-      },
-      {
-        "url": "https://undraw.co/illustrations",
-        "title": "unDraw",
-        "desc": "https://undraw.co/illustrations"
-      },
-      {
-        "url": "https://500px.com.cn/community/discover",
-        "title": "500px(国内版)",
-        "desc": "https://500px.com.cn/community/discover"
-      },
-      {
-        "url": "https://www.skypixel.com/",
-        "title": "天空之城",
-        "desc": "https://www.skypixel.com/"
-      },
-      {
-        "url": "https://www.logosc.cn/so/",
-        "title": "搜图神器",
-        "desc": "https://www.logosc.cn/so/"
-      },
-      {
-        "url": "https://www.foodiesfeed.com/",
-        "title": "Foodiesfeed",
-        "desc": "https://www.foodiesfeed.com/"
-      },
-      {
-        "url": "http://www.designerspics.com/",
-        "title": "DesignersPics",
-        "desc": "http://www.designerspics.com/"
-      },
-      {
-        "url": "https://giphy.com/",
-        "title": "GIPHY",
-        "desc": "https://giphy.com/"
-      },
-      {
-        "url": "https://www.photopea.com/",
-        "title": "Photopea",
-        "desc": "https://www.photopea.com/"
-      },
-      {
-        "url": "https://cleanmock.com/designer",
-        "title": "样机图-cleanmock",
-        "desc": "https://cleanmock.com/designer"
-      },
-      {
-        "url": "https://smartmockups.com/mockups",
-        "title": "样机图-smartmockups",
-        "desc": "https://smartmockups.com/mockups"
-      },
-      {
-        "url": "https://www.soogif.com/gifTool?utmId=9005",
-        "title": "GIF编辑-soogif",
-        "desc": "https://www.soogif.com/gifTool?utmId=9005"
-      },
-      {
         "url": "https://bigjpg.com/zh",
         "title": "无损放大-bigjpg",
         "desc": "https://bigjpg.com/zh"
@@ -2002,36 +1602,6 @@ var NAV_DATA = [
         "url": "https://tool.lu/favicon/",
         "title": "favicon制作",
         "desc": "https://tool.lu/favicon/"
-      },
-      {
-        "url": "https://sketchapp.com/",
-        "title": "Sketch",
-        "desc": "https://sketchapp.com/"
-      },
-      {
-        "url": "http://www.adobe.com/products/xd.html",
-        "title": "Adobe XD",
-        "desc": "http://www.adobe.com/products/xd.html"
-      },
-      {
-        "url": "https://www.invisionapp.com/",
-        "title": "invisionapp",
-        "desc": "https://www.invisionapp.com/"
-      },
-      {
-        "url": "https://marvelapp.com/",
-        "title": "marvelapp",
-        "desc": "https://marvelapp.com/"
-      },
-      {
-        "url": "https://creative.adobe.com/zh-cn/products/download/muse",
-        "title": "Muse CC",
-        "desc": "https://creative.adobe.com/zh-cn/products/download/muse"
-      },
-      {
-        "url": "https://www.figma.com/",
-        "title": "figma",
-        "desc": "https://www.figma.com/"
       }
     ]
   },
@@ -2388,29 +1958,14 @@ var NAV_DATA = [
         "desc": "一站式编程资源搜索,发现优质编程学习资源,提高编程学习效率"
       },
       {
-        "url": "https://www.ooopn.com/",
-        "title": "小白导航",
-        "desc": "Google搜索镜像，Google学术镜像，Library Genesis镜像，Z-Library镜像"
-      },
-      {
         "url": "https://morething.top/",
         "title": "有点儿东西",
         "desc": "致力于发现更多美好实用的网站资源，影视、软件、网盘、编程搜索和技术分享。"
       },
       {
-        "url": "https://site.sciping.com/",
-        "title": "科塔学术导航",
-        "desc": "科塔学术导航是一个质量非常高的学术导航网站，强烈推荐收藏。"
-      },
-      {
         "url": "https://search.chongbuluo.com/",
         "title": "快搜",
         "desc": "虫部落快搜,聚合搜索引擎,搜索快人一步"
-      },
-      {
-        "url": "https://webjike.com/",
-        "title": "小呆导航",
-        "desc": "可自定义的简洁网址导航"
       },
       {
         "url": "https://www.egouz.com/",
@@ -2482,11 +2037,6 @@ var NAV_DATA = [
         "url": "https://ke.qq.com/course/list?mt=1001",
         "title": "腾讯课程 - IT互联网",
         "desc": "腾讯推出的专业在线教育平台，采用直播教学方式，适合有充裕时间学习的同学"
-      },
-      {
-        "url": "https://qkmp4.cn/",
-        "title": "趣看视界",
-        "desc": "免VIP看电影-全网资源实时更新，你想看的这里全都有"
       },
       {
         "url": "https://www.mvyxws.com/",
@@ -2586,24 +2136,9 @@ var NAV_DATA = [
     "name": "福利资源",
     "links": [
       {
-        "url": "https://github.com/pgfldh/-X-",
-        "title": "小X福利导航",
-        "desc": "小X福利导航最新地址，小X福利导航地址发布页"
-      },
-      {
         "url": "https://qscxx.top/",
         "title": "岛国资源站",
         "desc": "岛国资源站,h漫画,高肉小说,抖手漫画最新地址发布"
-      },
-      {
-        "url": "https://www.13535.xyz/",
-        "title": "135ckk",
-        "desc": "135ckk视频地址发布页"
-      },
-      {
-        "url": "https://github.com/yuhuage/dizhi/",
-        "title": "雨花阁",
-        "desc": "雨花阁BT搜索地址发布页"
       },
       {
         "url": "https://github.com/fwonggh/Bthub",
@@ -2621,7 +2156,7 @@ var NAV_DATA = [
         "desc": "围绕小说书库、章节阅读、都市题材和热门书单建立分类导航，覆盖短篇、长篇、连载和完结内容。"
       }
     ]
-  },
+  }
 ];
 </script>
   </body>
