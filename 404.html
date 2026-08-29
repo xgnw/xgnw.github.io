@@ -1,12 +1,101 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
   <meta charset="utf-8" />
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=ai-legible&utm_source=comment&utm_medium=referral&utm_id=cc985b83-9f9a-4a4d-9e94-b86016569390
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="hosting-provider" content="Netlify">
+<meta name="netlify-deploy" content="https://netlify.new/?utm_campaign=ai-legible&amp;utm_source=meta&amp;utm_medium=referral&amp;utm_id=cc985b83-9f9a-4a4d-9e94-b86016569390">
   <title>404错误</title>
-  <link rel="shortcut icon" href="favicon.png" type="image/x-icon" />
-  <link rel="stylesheet" href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/6.0.0/css/all.min.css" />
+  <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KICA8cmVjdCB4PSI0IiB5PSI0IiB3aWR0aD0iNTYiIGhlaWdodD0iNTYiIHJ4PSIxNCIgZmlsbD0iIzQyNUFFRiIvPgogIDx0ZXh0IHg9IjMyIiB5PSI0MyIgZm9udC1mYW1pbHk9IkFyaWFsLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjQwNDwvdGV4dD4KPC9zdmc+Cg==" type="image/svg+xml" />
   <style>
+  @charset "UTF-8";
+@media (min-width: 100px) and (max-width: 767px) {
+  /* 在此添加针对手机屏幕的样式 */
+  html {
+    font-size: 12px !important;
+  }
+  #progress-bar-container {
+    width: 80% !important;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* 在此添加针对平板屏幕的样式 */
+  html {
+    font-size: 14px !important;
+  }
+  #progress-bar-container {
+    width: 80% !important;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1920px) {
+  /* 在此添加针对电脑屏幕的样式 */
+  html {
+    font-size: 16px !important;
+  }
+}
+#progress-bar-background {
+  position: absolute;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  width: 100%;
+  height: 100%;
+  background-color: white;
+  z-index: 1000;
+  font-family: "微软雅黑";
+}
+#progress-bar-background.hide {
+  opacity: 0;
+  -webkit-transition: opacity 0.5s ease;
+  transition: opacity 0.5s ease;
+}
+#progress-bar-background #progress-bar-container {
+  width: 50%;
+  height: 1px;
+  background-color: #e1e1e1;
+  /* 保证进度条在所有内容之上 */
+  z-index: 10000;
+}
+#progress-bar-background #progress-bar-container #progress-bar {
+  width: 0%;
+  height: 100%;
+  background-color: #545454;
+  /* 过渡效果 */
+  -webkit-transition: width 0.1s ease;
+  transition: width 0.1s ease;
+  margin-bottom: 10px;
+}
+#progress-bar-background #progress-bar-container .progress-text {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: row;
+          flex-direction: row;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+}
+#progress-bar-background #progress-bar-container .progress-text .loading-text {
+  margin-left: 0.5rem;
+}
+#progress-bar-background #progress-bar-container .progress-text .loading-title {
+  letter-spacing: 0.5rem;
+}
     :root {
       --text-color: #000;
       --text-color-gray: #888;
@@ -72,6 +161,13 @@
       color: var(--text-color-gray);
     }
 
+    .ico svg {
+      width: 1em;
+      height: 1em;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
     .title {
       font-size: 2rem;
       font-weight: bold;
@@ -106,12 +202,15 @@
       color: var(--text-color-hover);
     }
 
-    .control button i {
-      margin-right: 6px;
+    .control button svg {
+      width: 1.15em;
+      height: 1.15em;
+      vertical-align: -0.15em;
+      margin-right: 8px;
     }
 
     footer {
-      line-height: 1.75rem;
+      line-height: 2.25rem;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -125,10 +224,16 @@
       display: flex;
       align-items: center;
       cursor: pointer;
+      margin-bottom: 0.3rem;
     }
 
-    footer .social i {
-      margin: 0 12px;
+    footer .social svg {
+      width: 1.5em;
+      height: 1.5em;
+      flex: 0 0 auto;
+      vertical-align: middle;
+      margin: 0 16px;
+      cursor: pointer;
     }
 
     footer .point::before {
@@ -144,31 +249,48 @@
 </head>
 
 <body>
+    <div id="progress-bar-background">
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
+            <div class="progress-text">
+                <p class="loading-text">>>> LOADING - <span id="loading-number">0%</span></p>
+                <p class="loading-title">正在热烈加载中</p>
+            </div>
+        </div>
+    </div>
   <main>
-    <div class="ico"><i class="fa-solid fa-circle-exclamation"></i></div>
-    <div class="title">简单导航</div>
-    <div class="text">您好像输入了错误的地址</div>
-    <!-- <div class="tip">本服务已开启防跨站请求</div> -->
+    <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="7.5" x2="12" y2="13"/><line x1="12" y1="16.5" x2="12.01" y2="16.5"/></svg></div>
+    <div class="title">您好像输入了错误的地址</div>
+            <div class="text">↓ 不要慌，来碗毒鸡汤暖暖心灵吧！↓</div>
+                <div style="line-height: 30px; font-size: 12pt">“
+              <script
+                type="text/javascript"
+                src="https://api.yum6.cn/djt/index.php?encode=js"
+              ></script>
+              <script>
+                if (typeof binduyan === 'function') { binduyan(); }
+              </script>”
+            </div>
     <div class="control">
       <button onclick="clickFunction()">
-        <i class="fa-solid fa-rotate-left"></i>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
         <span>回到首页</span>
       </button>
-      <!-- <button onclick="window.open(`https://binaryify.github.io/NeteaseCloudMusicApi/`)">
-        <i class="fa-solid fa-book"></i>
-        <span>接口文档</span>
-      </button> -->
+      <button onclick="window.open(`https://432600.xyz/`)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>简单导航</span>
+      </button> 
     </div>
   </main>
   <footer>
     <div class="social">
-      <i class="fa-brands fa-github" onclick="socialJump('github')"></i>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" onclick="socialJump('github')"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
       <div class="point"></div>
-      <i class="fa-solid fa-house" onclick="socialJump('home')"></i>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" onclick="socialJump('home')"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10h14V10"/></svg>
       <div class="point"></div>
-      <i class="fa-solid fa-envelope" onclick="socialJump('email')"></i>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" onclick="socialJump('email')"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
       <div class="point"></div>
-      <i class="fa-brands fa-qq fa-qq" onclick="socialJump('qq')"></i>
+      <svg viewBox="0 0 448 512" fill="none" stroke="currentColor" stroke-width="38" stroke-linecap="round" stroke-linejoin="round" onclick="socialJump('qq')"><path d="M433.754 420.445c-11.526 1.393-44.86-52.741-44.86-52.741 0 31.345-16.136 72.247-51.051 101.786 16.842 5.192 54.843 19.167 45.803 34.421-7.316 12.343-125.51 7.881-159.632 4.037-34.122 3.844-152.316 8.306-159.632-4.037-9.045-15.25 28.918-29.214 45.783-34.415-34.92-29.539-51.059-70.445-51.059-101.792 0 0-33.334 54.134-44.859 52.741-5.37-.65-12.424-29.644 9.347-99.704 10.261-33.024 21.995-60.478 40.144-105.779C60.683 98.063 108.982.006 224 0c113.737.006 163.156 96.133 160.264 214.963 18.118 45.223 29.912 72.85 40.144 105.778 21.768 70.06 14.716 99.053 9.346 99.704z"/></svg>
     </div>
     <div class="power">
       Copyright ©
@@ -190,7 +312,7 @@
         document.documentElement.classList.remove("dark-mode");
       }
     };
-    darkModeMediaQuery.addListener(toggleDarkMode);
+    darkModeMediaQuery.addEventListener('change', toggleDarkMode);
     toggleDarkMode(darkModeMediaQuery);
 
     // 按钮事件
@@ -217,7 +339,68 @@
           break;
       }
     };
-  </script>
+  </script><script>
+    // 属性
+    let progressBackground = document.getElementById('progress-bar-background');
+    let progressBar = document.getElementById('progress-bar');
+    let loadingText = document.getElementById('loading-number');
+    let simulatedProgress = 0; // 用于模拟进度
+
+    // 改变进度条函数
+    const increaseProgress = (size) => {
+        if (simulatedProgress < size) {
+            simulatedProgress += Math.random() * 5; // 每次增加一个随机值，确保平滑增长
+            simulatedProgress = simulatedProgress > 100 ? 100 : simulatedProgress;
+            progressBar.style.width = simulatedProgress + '%';
+            loadingText.innerText = Math.round(simulatedProgress) + '%';
+        }
+    }
+
+    let show = true
+    if (show) {
+        // 添加事件
+        document.addEventListener('readystatechange', function () {
+            let links = document.querySelectorAll('a');
+
+            let interval;
+
+            if (document.readyState === 'interactive') {
+                clearInterval(interval);
+                interval = setInterval(() => {
+                    increaseProgress(90)
+                }, 100);
+            }
+
+            let all = setInterval(() => {
+                if (document.readyState === 'complete' && simulatedProgress > 90) {
+                    clearInterval(interval);
+
+                    increaseProgress(100)
+
+                    let changeHide = setTimeout(() => {
+                        progressBackground.classList.add('hide');
+                        clearTimeout(changeHide);
+
+                        let changeNone = setTimeout(() => {
+                            progressBackground.style.display = 'none';
+
+                            for (let i = 0; i < links.length; i++) {
+                                let changeButton = setTimeout(() => {
+                                    links[i].classList.add('show');
+                                }, 200 * i);
+                            }
+                            clearTimeout(changeNone);
+                            clearInterval(all);
+                        }, 500);
+
+                    }, 1000);
+                }
+            })
+        });
+    }
+
+</script>
+
 </body>
 
 </html>
