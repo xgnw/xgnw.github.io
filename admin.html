@@ -118,17 +118,22 @@
     .nv_mini[data-act^="move-"] { padding: 0 7px; min-width: 26px; }
     .nv_cat.nv_collapsed .nv_links { display: none; }
     .nv_links { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
-    .nv_link_row { display: flex; align-items: center; justify-content: space-between; gap: 8px;
-                   padding: 7px 10px; border-radius: 8px; background: var(--card-bg);
-                   border: 1px solid var(--card-border); }
+    .nv_link_row { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+                   padding: 8px 10px; border-radius: 8px; background: var(--card-bg);
+                   border: 1px solid var(--card-border); min-height: 52px;
+                   box-sizing: border-box; }
     .nv_link_row.nv_editing { align-items: flex-start; flex-wrap: wrap; }
-    .nv_link_main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .nv_link_main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px;
+                    justify-content: center; }
     .nv_link_title { font-size: 13px; font-weight: 600; color: var(--fontcolor);
                      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .nv_link_url { font-size: 11px; color: var(--secondtext);
                    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .nv_link_desc { font-size: 11px; color: var(--secondtext); opacity: .85;
                     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nv_link_acts { display: flex; gap: 5px; flex-shrink: 0; flex-wrap: nowrap; align-items: center;
+                    justify-content: flex-end; }
+    /* 链接行的下拉菜单按钮（统一风格，替换原 6 颗小按钮以压缩高度） */
     .nv_mini.nv_danger { border-color: #e15a5a; color: #e15a5a; }
     .nv_mini.nv_danger:hover { background: #e15a5a; color: #fff; }
     .nv_edit_input { height: 32px; padding: 0 10px; width: 100%; box-sizing: border-box;
@@ -520,9 +525,9 @@
     /* 把 NAV_DATA 与 SEARCH_ENGINES 序列化后替换回 index.html 源码 */
     function buildHtml() {
       var navJson = JSON.stringify(NAV_DATA, null, 2);
-      var re = /const NAV_DATA = \[[\s\S]*?\n\];/;
+      var re = /(?:var|let|const) NAV_DATA = \[[\s\S]*?\n\];/;
       if (!re.test(rawHtml)) throw new Error('未在 index.html 中找到 NAV_DATA 标记。');
-      var out = rawHtml.replace(re, 'const NAV_DATA = ' + navJson + ';');
+      var out = rawHtml.replace(re, 'var NAV_DATA = ' + navJson + ';');
       /* 搜索引擎块：若文件里存在则一并替换（不存在则保持原样，避免误改） */
       var seJson = JSON.stringify(SEARCH_ENGINES, null, 2);
       var seRe = /window\.SEARCH_ENGINES\s*=\s*\[[\s\S]*?\n\s*\];/;
@@ -694,18 +699,35 @@
         .catch(function (e) { setHint('GitHub 写回失败：' + (e && e.message ? e.message : e)); });
     }
 
-    /* 从 index.html 源码解析 NAV_DATA 到内存 */
+    /* 从 index.html 源码解析 NAV_DATA 到内存（失败抛详细异常，便于在「选择文件失败」处呈现） */
     function parseData() {
-      var m = rawHtml.match(/const NAV_DATA = (\[[\s\S]*?\n\]);/);
-      if (!m) throw new Error('未在 index.html 中找到 NAV_DATA 标记。');
-      NAV_DATA = JSON.parse(m[1]);
+      var m = rawHtml.match(/(?:var|let|const) NAV_DATA = (\[[\s\S]*?\n\]);/);
+      if (!m) throw new Error('未在 index.html 中找到 NAV_DATA 标记。请确认选中的是当前在线/本机的最新版 index.html。');
+      try { NAV_DATA = JSON.parse(m[1]); }
+      catch (e) {
+        var pos = (e.message.match(/position (\d+)/) || [])[1];
+        var around = pos ? m[1].substring(Math.max(0, +pos - 30), +pos + 50) : '';
+        throw new Error('NAV_DATA 不是合法 JSON：' + e.message +
+          (around ? '\n故障片段：…' + around.replace(/\s+/g, ' ') + '…' : '') +
+          '\n建议：不要手动修改 index.html 的 NAV_DATA 块；如需恢复，重新保存一次 admin 即可生成标准 JSON。');
+      }
     }
 
-    /* 从 index.html 源码解析 SEARCH_ENGINES 到内存（缺失则不报错，默认空数组） */
+    /* 从 index.html 源码解析 SEARCH_ENGINES 到内存（缺失容错；非合法 JSON 时给提示但保留空数组，不阻断其它数据加载） */
     function parseSearchEngines() {
       var m = rawHtml.match(/window\.SEARCH_ENGINES\s*=\s*(\[[\s\S]*?\n\s*\]);/);
       if (!m) { SEARCH_ENGINES = []; return; }
-      try { SEARCH_ENGINES = JSON.parse(m[1]); } catch (e) { SEARCH_ENGINES = []; }
+      try { SEARCH_ENGINES = JSON.parse(m[1]); }
+      catch (e) {
+        SEARCH_ENGINES = [];
+        try {
+          var pos = (e.message.match(/position (\d+)/) || [])[1];
+          var around = pos ? m[1].substring(Math.max(0, +pos - 30), +pos + 50) : '';
+          setHint('⚠ SEARCH_ENGINES 不是合法 JSON，已忽略（搜索引擎列表将为空）：' + e.message +
+            (around ? '\n故障片段：…' + around.replace(/\s+/g, ' ') + '…' : '') +
+            '\n建议：重新保存一次 admin 即可重写该块为标准格式。');
+        } catch (_) { /* noop */ }
+      }
     }
 
     /* 更新顶栏计数 */
