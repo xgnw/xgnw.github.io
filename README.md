@@ -309,7 +309,7 @@
 
 <div align="center">
 
-**Made with ❤️ by QingJ**
+**Made with ❤️ by XGNW**
 
 [⬆ 回到顶部](#xgnw.github.io)
 
