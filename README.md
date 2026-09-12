@@ -307,5 +307,13 @@
 
 ---
 
+<div align="center">
+
+**Made with ❤️ by QingJ**
+
+[⬆ 回到顶部](#xgnw.github.io)
+
+</div>
+
 *本 README 由项目维护过程整理，覆盖导航站、两个管理后台、博客与 Cloudflare 后端的全部功能、
 技术实现与部署方式。*
