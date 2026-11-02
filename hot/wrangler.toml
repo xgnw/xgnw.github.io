@@ -1,0 +1,38 @@
+# Cloudflare Worker 配置：今日热榜自建后端
+#
+# 部署流程（一共 4 步，约 3 分钟）：
+#   1) npm install -g wrangler && wrangler login
+#   2) wrangler kv namespace create HOT_KV
+#      -> 把输出的 id 填到下面 [[kv_namespaces]] 的 id
+#   3) wrangler secret put ADMIN_SECRET     （写接口的管理员密钥，不会存进文件）
+#   可选：wrangler secret put UPSTREAMS    （覆盖上游列表，见下）
+#   4) wrangler deploy
+#
+# 部署完把输出的 https://hot-api.<你的子域>.workers.dev 填进 hot/index.html 的
+# CFG.API_BASE（或页面右上角 ⚙ 的「自建后端地址」），页面就会自动实时取数。
+#
+# 变量说明：
+#   HOT_TTL      缓存秒数，默认 600（10 分钟）。热榜 10 分钟足够新。
+#   UP_TIMEOUT   单个上游超时毫秒，默认 8000。
+#   UPSTREAMS    上游列表，逗号分隔，{n} 替换为榜单关键字。
+#                默认值在 core.js 的 DEFAULT_UPSTREAMS（imsyy / rinne / pearktrue / hcol / 60s）。
+#   HOT_SOURCES  自建榜单清单 JSON，格式见下。不填则用「KV 里已有的清单」→「内置清单」。
+#
+# HOT_SOURCES 示例（把你页面上已有的 28 榜原样搬过来，upstream 填该上游能识别的关键字）：
+#   [{ "name": "知乎热榜", "upstream": "zhihu", "cat": "综合热榜",
+#      "icon": "https://file.ipadown.com/tophub/assets/images/media/zhihu.com.png_160x160.png" }]
+
+name = "hot-api"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+
+# KV 命名空间：先 wrangler kv namespace create HOT_KV 再填 id
+[[kv_namespaces]]
+binding = "HOT_KV"
+id = "在此填入你的_KV_Namespace_ID"
+
+[vars]
+# 缓存秒数（热榜多久回源一次）
+HOT_TTL = 600
+# 单个上游请求超时（毫秒）
+UP_TIMEOUT = 8000
