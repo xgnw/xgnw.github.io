@@ -5,6 +5,14 @@
  * ============================================================ */
 window.__POSTS__ = [
       {
+        slug: "Chrome",
+        title: "Chrome",
+        date: "2026-09-01",
+        tags: ["Chrome"],
+        category: "Chrome",
+        content: "# Chrome使用技巧\n\n\n\n## 网页截屏\n\n假设目前你已经打开需要截屏的网页，那么接下来按照以下步骤操作。\n\n第1步：打开Chrome调试工具——快捷键为 Ctrl + Shift + I\n\n第2步：打开命令列表——快捷键为 Ctrl + Shift + P\n\n第3步：输入 screenshot\n\n第4步：点击第 2 项 “Capture full size screenshot”，即可完成网页内容的全部截屏\n\n\n\n\n\n## 免费解锁 Medium 付费文章\n\n#### 第1种：通过 readium 书签\n\n第1步：访问 https://sugoidesune.github.io/readium/\n\n第2步：拖动 Readium 按钮到浏览器书签栏\n\n第3步：以后遇到付费文章，点击这个书签就可以自动解锁\n\n补充说明：这种方式有个缺点，浏览器书签栏 必须一直保持为显示状态\n\n\n\n#### 第2种：通过浏览器插件 Bypass Paywalls\n\n第1步：下载离线安装包 https://github.com/iamadamdev/bypass-paywalls-chrome/archive/master.zip \n\n第2步：打开Chrome扩展页，并开启 “开发者模式”\n\n第3步：将解压后的安装包目录拖到 Chrome 扩展页，点击确认即可安装成功\n\n第4步：将 Bypass Paywalls 固定在 Chrome 顶部\n\n第4步：以后遇到付费文章，点击这个扩展程序图标即可自动解锁\n\n\n## 实时查看当前页面渲染性能\n\n除了浏览器本身的 性能(Performance) 面板外，还有另外一个重要的、方便我们查看页面渲染性能的工具——Rendering。\n\n#### 开启Rendering方式\n\n1. 打开浏览器调试工具 DevTool\n\n2. 点击右侧 3 个小圆点\n\n3. 鼠标移动到 More tools\n\n4. 点击 Rendering\n\n5. 在新出现的 Rendering 面板中，勾选 Frame Rendering Stats\n\n   > 备注：在旧的谷歌浏览器中，应该勾选的是 Show FPS meter\n\n这样就可以在网页左上角，实时看到当前渲染性能状况。\n\n\n\n#### 性能数据解读\n\n性能展示的数据，主要 2 个模块：Frames 和 GPU\n\n**GPU 相关：**\n\n1. GPU raster ：on  表示 GPU 光栅化已开启\n\n2. GPU memory：GPU 已用大小、GPU 最大可用大小\n\n   > 在本示例中，通常是当修改浏览器尺寸时，此时需要大量计算，会显示出 GPU memory\n   >\n   > 在普通的 鼠标拖拽 改变地球视角时，不会显示 GPU memory\n\n**Frames相关：**\n\n假设某一时刻，渲染性能结果为 Frames：63% 1082(0m) dropped of 2737\n\n对应的解读为：\n\n第1个数字 63% —— 63% 的帧按时渲染完成\n\n第2个数字 1082 —— 有 1082 个合成帧丢失(未渲染)\n\n第3个数字 0m —— 有 0 个帧丢失\n\n第4个数字 2737 —— 原本计划渲染 2737 个帧\n\n数字之间的计算关系为 63% ≈ 1 - (1082 + 0 )/ 2737\n\n也就是说 第2个数字(丢失的合成帧)越小，那么整体按时完成渲染帧的百分比(第1个数字)越大，意味着此刻网页越流畅。\n\n"
+      },
+      {
         slug: "code",
         title: "代码注释的一些特殊用法",
         date: "2026-08-25",
@@ -26,7 +34,7 @@ window.__POSTS__ = [
         date: "2026-08-24",
         tags: ["网站制作", "教程"],
         category: "教程",
-        content: "这是一个**纯静态**博客，没有任何后端或构建工具，文章数据放在独立的 `posts-data.js` 文件里。\n\n## 核心思路\n\n1. 文章数据集中在独立的 `posts-data.js` 文件里的 `__POSTS__` 数组，改数据即改页面。\n2. 列表与详情都用哈希路由（`#/post/<slug>`）切换，单文件内完成。\n3. 视觉风格参考 Pure 主题的蓝色侧栏三栏布局，沿用同源导航网的卡片化细节。\n\n## 如何新增一篇文章\n\n只需在 `posts-data.js` 的 `__POSTS__` 数组里加一个对象：\n\n```js\n{\n  slug: \"my-post\",\n  title: \"我的文章\",\n  date: \"2026-08-25\",\n  tags: [\"标签\"],\n  content: \"正文用 **Markdown** 写~\"\n}\n```\n\n保存后用浏览器打开即可看到。"
+        content: "这是一个**纯静态**博客，没有任何后端或构建工具，全部内容都在这一个 `blog.html` 文件里。\n\n## 核心思路\n\n1. 文章数据集中在页面底部的 `POSTS` 数组，改数据即改页面。\n2. 列表与详情都用哈希路由（`#/post/<slug>`）切换，单文件内完成。\n3. 视觉风格参考 Pure 主题的蓝色侧栏三栏布局，沿用同源导航网的卡片化细节。\n\n## 如何新增一篇文章\n\n只需在 `POSTS` 数组里加一个对象：\n\n```js\n{\n  slug: \"my-post\",\n  title: \"我的文章\",\n  date: \"2026-08-25\",\n  tags: [\"标签\"],\n  content: \"正文用 **Markdown** 写~\"\n}\n```\n\n保存后用浏览器打开即可看到。"
       },
       {
         slug: "markdown-demo",
@@ -36,11 +44,11 @@ window.__POSTS__ = [
         category: "教程",
         content: "博客内置了一个轻量 Markdown 渲染器，支持以下常用语法：\n\n### 标题\n\n用 `#` 到 `######` 表示一至六级标题。\n\n### 强调\n\n- **加粗**：用 `**文字**`\n- *斜体*：用 `*文字*`\n- `行内代码`：用反引号包裹\n\n### 列表\n\n无序列表用 `-` 或 `*`：\n\n- 第一项\n- 第二项\n  - 嵌套项\n\n有序列表用数字：\n\n1. 第一步\n2. 第二步\n\n### 引用与链接\n\n> 引用一段文字，用 `>` 开头。\n\n访问 [简单导航](new.html) 看看同源风格的导航站。\n\n### 分割线\n\n---"
       }
-    ];/* ============================================================
+];/* ============================================================
      * 友情链接数据：新增友链只需往 FRIENDS 数组加一个对象即可
      * ============================================================ */
     var FRIENDS = [
-      { name: '简单导航', url: 'new.html', desc: '本人维护的导航站，收录常用的网站与工具。' },
-      { name: '432600.xyz', url: 'https://432600.xyz/', desc: '博客与导航站视觉风格的参考来源站。' },
-      { name: '百度', url: 'https://www.baidu.com', desc: '搜索引擎（占位示例，可替换为自己常逛的站）。' }
-    ];;
+      { name: "简单导航", url: "new.html", desc: "本人维护的导航站，收录常用的网站与工具。" },
+      { name: "432600.xyz", url: "https://432600.xyz/", desc: "博客与导航站视觉风格的参考来源站。" },
+      { name: "百度", url: "https://www.baidu.com", desc: "搜索引擎（占位示例，可替换为自己常逛的站）。" }
+    ];
